@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [Unreleased]
+\n## [v0.1.4] - 2026-08-09
+
+### Merged Feature
+- fix(ci): use gh pr create in create-release-pr workflow to eliminate … (#11 by @Ketan-Chaudhary)
+
 \n## [v0.1.3] - 2026-08-09
 
 ### Merged Feature
