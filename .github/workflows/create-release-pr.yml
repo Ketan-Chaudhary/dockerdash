@@ -1,4 +1,4 @@
-name: Automated SemVer & Release on PR Merge
+name: Create Release PR
 
 on:
   pull_request:
@@ -9,13 +9,13 @@ on:
 
 permissions:
   contents: write
-  pull-requests: read
+  pull-requests: write
 
 jobs:
-  # Only run if the PR was actually merged into main
-  release-on-merge:
-    name: Determine Version & Create Release
-    if: github.event.pull_request.merged == true
+  create-release-pr:
+    name: Prepare Automated Release PR
+    # Run only if merged AND if it is not already a release PR
+    if: github.event.pull_request.merged == true && !startsWith(github.event.pull_request.title, 'chore(release)')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -29,7 +29,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      # Determine SemVer bump type from PR labels
+      # Determine SemVer Bump Type from PR labels
       - name: Determine SemVer Bump Type
         id: bump_type
         run: |
@@ -45,17 +45,12 @@ jobs:
           fi
 
           echo "BUMP_TYPE=$BUMP" >> $GITHUB_ENV
-          echo "Selected Bump Type: $BUMP"
 
-      # Calculate Next SemVer Tag
+      # Calculate Next Version Tag
       - name: Calculate Next Version Tag
         id: semver
         run: |
-          # Fetch latest tag or fallback to v0.1.0
           LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0")
-          echo "Latest tag: $LATEST_TAG"
-
-          # Strip leading 'v'
           VERSION=${LATEST_TAG#v}
 
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
@@ -84,10 +79,13 @@ jobs:
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
           echo "Calculated New Tag: $NEW_TAG"
 
-      # Update pyproject.toml & CHANGELOG.md
-      - name: Update pyproject.toml and CHANGELOG.md
+      # Create Release Branch and Update Files
+      - name: Update Files on Release Branch
         run: |
-          # Update version in pyproject.toml
+          BRANCH_NAME="release/${NEW_TAG}"
+          git checkout -b "$BRANCH_NAME"
+
+          # Update pyproject.toml and __init__.py
           sed -i 's/version = "[^"]*"/version = "'"$NEW_VERSION"'"/' pyproject.toml
           sed -i 's/__version__ = "[^"]*"/__version__ = "'"$NEW_VERSION"'"/' dockdash/__init__.py
 
@@ -97,50 +95,35 @@ jobs:
           PR_AUTHOR="${{ github.event.pull_request.user.login }}"
           DATE=$(date +'%Y-%m-%d')
 
-          ENTRY="## [$NEW_TAG] - $DATE\n\n### Merged Pull Request\n- $PR_TITLE (#$PR_NUM by @$PR_AUTHOR)\n"
-
-          # Insert release entry into CHANGELOG.md
+          ENTRY="## [$NEW_TAG] - $DATE\n\n### Merged Feature\n- $PR_TITLE (#$PR_NUM by @$PR_AUTHOR)\n"
           sed -i "/## \[Unreleased\]/a \\\\\\n$ENTRY" CHANGELOG.md
 
+          # Commit and Push Release Branch
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add pyproject.toml dockdash/__init__.py CHANGELOG.md
-          git commit -m "chore(release): bump version to $NEW_TAG [skip ci]" || echo "No changes to commit"
-          git push origin main
+          git commit -m "chore(release): prepare release ${NEW_TAG}"
+          git push origin "$BRANCH_NAME" --force
 
-          # Create and push git tag
-          git tag -a "$NEW_TAG" -m "Release $NEW_TAG - PR #$PR_NUM"
-          git push origin "$NEW_TAG"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
 
-      # Build Release Artifacts & Publish GitHub Release
-      - name: Install Build Tools & PyInstaller
-        run: |
-          python -m pip install --upgrade pip
-          pip install . build PyInstaller
-
-      - name: Build Executables & Packages
-        run: |
-          pyinstaller --onefile --name dockdash --collect-all textual --collect-all tree_sitter_languages --add-data "dockdash/styles.tcss:dockdash" dockdash/app.py
-          python -m build
-
-          tar -czvf "dist/dockdash-linux-x86_64-${NEW_TAG}.tar.gz" -C dist dockdash
-          tar -czvf "dist/dockdash-${NEW_TAG}-source.tar.gz" --exclude='.venv' --exclude='build' --exclude='dist' --exclude='.git' .
-
-      - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
+      # Open Automated Release Pull Request
+      - name: Create Pull Request for Release
+        uses: peter-evans/create-pull-request@v6
         with:
-          tag_name: ${{ env.NEW_TAG }}
-          name: "DockDash ${{ env.NEW_TAG }}"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ env.BRANCH_NAME }}
+          title: "chore(release): prepare release ${{ env.NEW_TAG }}"
+          commit-message: "chore(release): prepare release ${{ env.NEW_TAG }}"
+          labels: "release"
           body: |
-            ## Release ${{ env.NEW_TAG }}
+            ## Automated Release PR — ${{ env.NEW_TAG }}
 
-            ### Merged Pull Request
-            - ${{ github.event.pull_request.title }} (#${{ github.event.pull_request.number }}) by @${{ github.event.pull_request.user.login }}
+            This PR was automatically generated following the merge of PR #${{ github.event.pull_request.number }}.
 
-            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for full release notes.
-          files: |
-            dist/*.whl
-            dist/dockdash-linux-x86_64-${{ env.NEW_TAG }}.tar.gz
-            dist/dockdash-${{ env.NEW_TAG }}-source.tar.gz
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            ### Included Changes:
+            - **Version Bump**: `${{ env.NEW_TAG }}`
+            - **Updated Files**: `pyproject.toml`, `dockdash/__init__.py`, `CHANGELOG.md`
+
+            ### Next Step for Maintainers:
+            Review and click **Merge pull request** to publish the release binaries to GitHub Releases!
