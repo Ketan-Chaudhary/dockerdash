@@ -1,0 +1,27 @@
+"""Unit tests for DockerDashApp TUI navigation and screens."""
+
+import pytest
+from dockdash.app import DockerDashApp
+
+
+@pytest.mark.asyncio
+async def test_app_launch_and_title():
+    app = DockerDashApp()
+    async with app.run_test(size=(120, 40)) as pilot:
+        await pilot.pause()
+        assert app.TITLE.startswith("DockDash")
+        assert app.SUB_TITLE == "Docker Dashboard"
+
+
+@pytest.mark.asyncio
+async def test_help_modal():
+    app = DockerDashApp()
+    async with app.run_test(size=(120, 40)) as pilot:
+        await pilot.pause()
+        app.action_show_help()
+        await pilot.pause()
+        assert app.screen.__class__.__name__ == "HelpDialog"
+
+        await pilot.press("escape")
+        await pilot.pause()
+        assert app.screen.__class__.__name__ != "HelpDialog"
