@@ -1,0 +1,556 @@
+/* ─────────────────────────────────────────────────────────────────
+   DockDash — Dark Theme Stylesheet
+   Professional Docker Dashboard with sharp, technical aesthetics
+   ───────────────────────────────────────────────────────────────── */
+
+/* ── Color Palette ──
+   Background:     #0d1117 (deep space dark)
+   Surface:        #161b22 (elevated panel)
+   Surface-alt:    #1c2333 (active/hover card)
+   Border:         #30363d (subtle divider)
+   Border-focus:   #58a6ff (accent blue)
+   Text Primary:   #f0f6fc (crisp white)
+   Text Secondary: #8b949e (silver gray)
+   Text Muted:     #484f58 (dim gray)
+   Accent Blue:    #58a6ff
+   Accent Cyan:    #79c0ff
+   Accent Green:   #3fb950
+   Accent Red:     #f85149
+   Accent Amber:   #d29922
+*/
+
+/* ── Global ────────────────────────────────────────────────────── */
+
+Screen {
+    background: #0d1117;
+    color: #f0f6fc;
+}
+
+/* ── Header & Footer ──────────────────────────────────────────── */
+
+Header {
+    background: #161b22;
+    color: #58a6ff;
+    dock: top;
+}
+
+Footer {
+    background: #161b22;
+    color: #8b949e;
+    dock: bottom;
+}
+
+FooterKey {
+    background: #161b22;
+    color: #58a6ff;
+}
+
+FooterKey .footer-key--key {
+    background: #1c2333;
+    color: #79c0ff;
+    text-style: bold;
+}
+
+FooterKey .footer-key--description {
+    color: #8b949e;
+}
+
+/* ── TabbedContent & Tabs ──────────────────────────────────────── */
+
+TabbedContent {
+    background: #0d1117;
+}
+
+Tabs {
+    background: #161b22;
+    dock: top;
+    height: 3;
+    border-bottom: solid #30363d;
+}
+
+Tab {
+    background: #161b22;
+    color: #8b949e;
+    padding: 0 3;
+    margin: 0 1;
+}
+
+Tab:hover {
+    background: #1c2333;
+    color: #f0f6fc;
+}
+
+Tab.-active {
+    background: #1f6feb;
+    color: #ffffff;
+    text-style: bold;
+}
+
+Tab.-active:hover {
+    background: #388bfd;
+    color: #ffffff;
+}
+
+Underline {
+    color: #58a6ff;
+}
+
+TabPane {
+    background: #0d1117;
+    padding: 1 1;
+}
+
+/* ── DataTable ─────────────────────────────────────────────────── */
+
+DataTable {
+    background: #0d1117;
+    height: 1fr;
+    scrollbar-background: #161b22;
+    scrollbar-color: #30363d;
+    scrollbar-color-active: #58a6ff;
+    scrollbar-color-hover: #484f58;
+}
+
+DataTable > .datatable--header {
+    background: #161b22;
+    color: #79c0ff;
+    text-style: bold;
+}
+
+DataTable > .datatable--cursor {
+    background: #1c2333;
+    color: #f0f6fc;
+    text-style: bold;
+}
+
+DataTable > .datatable--header-cursor {
+    background: #161b22;
+    color: #79c0ff;
+    text-style: bold;
+}
+
+DataTable > .datatable--hover {
+    background: #161b2280;
+}
+
+DataTable:focus > .datatable--cursor {
+    background: #1c2333;
+    color: #ffffff;
+}
+
+/* ── Status Label Colors ───────────────────────────────────────── */
+
+.status-running {
+    color: #3fb950;
+    text-style: bold;
+}
+
+.status-exited {
+    color: #f85149;
+}
+
+.status-paused {
+    color: #d29922;
+    text-style: italic;
+}
+
+.status-created {
+    color: #58a6ff;
+}
+
+.status-restarting {
+    color: #db6d28;
+    text-style: bold;
+}
+
+.status-removing {
+    color: #484f58;
+}
+
+.status-dead {
+    color: #f85149;
+    text-style: bold;
+}
+
+.status-unknown {
+    color: #8b949e;
+}
+
+/* ── Panels & Cards ────────────────────────────────────────────── */
+
+.panel {
+    background: #161b22;
+    border: solid #30363d;
+    padding: 1 2;
+    margin: 0 0 1 0;
+}
+
+.panel-title {
+    color: #79c0ff;
+    text-style: bold;
+    padding: 0 0 1 0;
+}
+
+.card {
+    background: #1c2333;
+    border: solid #30363d;
+    padding: 1 2;
+    margin: 0 1 1 0;
+}
+
+/* ── Buttons ───────────────────────────────────────────────────── */
+
+Button {
+    background: #1c2333;
+    color: #f0f6fc;
+    border: solid #30363d;
+    min-width: 14;
+    height: 3;
+    margin: 0 1;
+}
+
+Button:hover {
+    background: #30363d;
+    color: #ffffff;
+    border: solid #58a6ff;
+}
+
+Button:focus {
+    background: #58a6ff;
+    color: #0d1117;
+    text-style: bold;
+    border: solid #ffffff;
+}
+
+Button.-primary {
+    background: #1f6feb;
+    color: #ffffff;
+    border: solid #388bfd;
+}
+
+Button.-primary:hover {
+    background: #388bfd;
+}
+
+Button.-primary:focus {
+    background: #79c0ff;
+    color: #0d1117;
+    text-style: bold;
+    border: solid #ffffff;
+}
+
+Button.-error {
+    background: #8b1a1a;
+    color: #f85149;
+    border: solid #f85149;
+}
+
+Button.-error:hover {
+    background: #a32828;
+}
+
+Button.-error:focus {
+    background: #f85149;
+    color: #ffffff;
+    text-style: bold;
+    border: solid #ffffff;
+}
+
+Button.-success {
+    background: #1a4d2e;
+    color: #3fb950;
+    border: solid #3fb950;
+}
+
+Button.-success:hover {
+    background: #238636;
+}
+
+Button.-success:focus {
+    background: #3fb950;
+    color: #0d1117;
+    text-style: bold;
+    border: solid #ffffff;
+}
+
+Button.-warning {
+    background: #4d3a1a;
+    color: #d29922;
+    border: solid #d29922;
+}
+
+Button.-warning:hover {
+    background: #6e5020;
+}
+
+Button.-warning:focus {
+    background: #d29922;
+    color: #0d1117;
+    text-style: bold;
+    border: solid #ffffff;
+}
+
+/* ── Form Inputs ───────────────────────────────────────────────── */
+
+Input {
+    background: #0d1117;
+    color: #f0f6fc;
+    border: solid #30363d;
+    padding: 0 1;
+}
+
+Input:focus {
+    border: solid #58a6ff;
+}
+
+Input.-invalid {
+    border: solid #f85149;
+}
+
+Label {
+    color: #8b949e;
+    padding: 1 0 0 0;
+}
+
+Select {
+    background: #0d1117;
+    color: #f0f6fc;
+    border: solid #30363d;
+}
+
+Select:focus {
+    border: solid #58a6ff;
+}
+
+SelectOverlay {
+    background: #161b22;
+    border: solid #30363d;
+}
+
+Switch {
+    background: #30363d;
+}
+
+Switch.-on {
+    background: #1f6feb;
+}
+
+/* ── TextArea / Code Editor ────────────────────────────────────── */
+
+TextArea {
+    background: #0d1117;
+    color: #f0f6fc;
+    border: solid #30363d;
+    height: 1fr;
+}
+
+TextArea:focus {
+    border: solid #58a6ff;
+}
+
+/* ── RichLog ───────────────────────────────────────────────────── */
+
+RichLog {
+    background: #0d1117;
+    color: #f0f6fc;
+    border: solid #30363d;
+    scrollbar-background: #161b22;
+    scrollbar-color: #30363d;
+    scrollbar-color-active: #58a6ff;
+    scrollbar-color-hover: #484f58;
+    height: 1fr;
+    padding: 0 1;
+}
+
+/* ── Text Helpers ──────────────────────────────────────────────── */
+
+.text-accent {
+    color: #58a6ff;
+}
+
+.text-teal {
+    color: #3fb9a0;
+}
+
+.text-muted {
+    color: #8b949e;
+}
+
+.text-error {
+    color: #f85149;
+}
+
+.text-success {
+    color: #3fb950;
+}
+
+.text-warning {
+    color: #d29922;
+}
+
+.text-bold {
+    text-style: bold;
+}
+
+/* ── Modal Dialogs ─────────────────────────────────────────────── */
+
+ModalScreen {
+    align: center middle;
+    background: #0d1117b3;
+}
+
+.modal-dialog {
+    background: #161b22;
+    border: solid #30363d;
+    padding: 1 2;
+    width: 80;
+    max-height: 80%;
+}
+
+.modal-title {
+    color: #79c0ff;
+    text-style: bold;
+    text-align: center;
+    padding: 1 0;
+    width: 100%;
+}
+
+.modal-body {
+    padding: 1 0;
+}
+
+.modal-footer {
+    layout: horizontal;
+    height: auto;
+    align: right middle;
+    padding: 1 0 0 0;
+}
+
+/* ── Connection Error Panel ────────────────────────────────────── */
+
+.error-panel {
+    background: #161b22;
+    border: solid #f85149;
+    padding: 2 4;
+    width: 60;
+    height: auto;
+    align: center middle;
+    content-align: center middle;
+}
+
+.error-title {
+    color: #f85149;
+    text-style: bold;
+    text-align: center;
+    width: 100%;
+}
+
+.error-message {
+    color: #8b949e;
+    text-align: center;
+    padding: 1 0;
+    width: 100%;
+}
+
+/* ── Container Detail Layout ───────────────────────────────────── */
+
+.detail-grid {
+    layout: grid;
+    grid-size: 2;
+    grid-gutter: 1;
+    padding: 1;
+}
+
+.detail-label {
+    color: #8b949e;
+    text-style: bold;
+    width: auto;
+}
+
+.detail-value {
+    color: #f0f6fc;
+    width: 1fr;
+}
+
+/* ── Progress Bar ──────────────────────────────────────────────── */
+
+ProgressBar {
+    padding: 0 1;
+}
+
+ProgressBar Bar {
+    color: #1f6feb;
+    background: #30363d;
+}
+
+ProgressBar PercentageStatus {
+    color: #8b949e;
+    text-style: bold;
+}
+
+/* ── Stats Bars ────────────────────────────────────────────────── */
+
+.stat-bar {
+    height: 1;
+    margin: 0 1;
+}
+
+.stat-label {
+    color: #79c0ff;
+    width: 12;
+    text-style: bold;
+}
+
+.stat-value {
+    color: #f0f6fc;
+    width: 1fr;
+}
+
+/* ── Scrollbars ────────────────────────────────────────────────── */
+
+* {
+    scrollbar-background: #161b22;
+    scrollbar-color: #30363d;
+    scrollbar-color-hover: #484f58;
+    scrollbar-color-active: #58a6ff;
+    scrollbar-size-vertical: 1;
+}
+
+/* ── Search Bar ────────────────────────────────────────────────── */
+
+.search-container {
+    dock: top;
+    height: 3;
+    background: #161b22;
+    border-bottom: solid #30363d;
+    padding: 0 1;
+    display: none;
+}
+
+.search-container.-visible {
+    display: block;
+}
+
+.search-container Input {
+    width: 100%;
+    border: solid #58a6ff;
+}
+
+/* ── Tab Actions Bar ───────────────────────────────────────────── */
+
+.actions-bar {
+    dock: bottom;
+    height: 1;
+    background: #161b22;
+    color: #8b949e;
+    padding: 0 1;
+}
+
+.action-key {
+    color: #79c0ff;
+    text-style: bold;
+}
+
+.action-label {
+    color: #8b949e;
+}
