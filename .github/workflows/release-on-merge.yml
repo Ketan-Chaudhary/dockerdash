@@ -127,7 +127,7 @@ jobs:
           tar -czvf "dist/dockdash-${NEW_TAG}-source.tar.gz" --exclude='.venv' --exclude='build' --exclude='dist' --exclude='.git' .
 
       - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ env.NEW_TAG }}
           name: "DockDash ${{ env.NEW_TAG }}"
