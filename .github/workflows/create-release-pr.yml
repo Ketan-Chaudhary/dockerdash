@@ -1,0 +1,129 @@
+name: Create Release PR
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-release-pr:
+    name: Prepare Automated Release PR
+    # Run only if merged AND if it is not already a release PR
+    if: github.event.pull_request.merged == true && !startsWith(github.event.pull_request.title, 'chore(release)')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Determine SemVer Bump Type from PR labels
+      - name: Determine SemVer Bump Type
+        id: bump_type
+        run: |
+          LABELS="${{ join(github.event.pull_request.labels.*.name, ' ') }}"
+          echo "PR Labels: $LABELS"
+
+          if [[ "$LABELS" =~ "major" ]]; then
+            BUMP="major"
+          elif [[ "$LABELS" =~ "minor" ]]; then
+            BUMP="minor"
+          else
+            BUMP="patch"
+          fi
+
+          echo "BUMP_TYPE=$BUMP" >> $GITHUB_ENV
+
+      # Calculate Next Version Tag
+      - name: Calculate Next Version Tag
+        id: semver
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0")
+          VERSION=${LATEST_TAG#v}
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          MAJOR=${MAJOR:-0}
+          MINOR=${MINOR:-1}
+          PATCH=${PATCH:-0}
+
+          if [ "$BUMP_TYPE" = "major" ]; then
+            NEW_MAJOR=$((MAJOR + 1))
+            NEW_MINOR=0
+            NEW_PATCH=0
+          elif [ "$BUMP_TYPE" = "minor" ]; then
+            NEW_MAJOR=$MAJOR
+            NEW_MINOR=$((MINOR + 1))
+            NEW_PATCH=0
+          else
+            NEW_MAJOR=$MAJOR
+            NEW_MINOR=$MINOR
+            NEW_PATCH=$((PATCH + 1))
+          fi
+
+          NEW_TAG="v${NEW_MAJOR}.${NEW_MINOR}.${NEW_PATCH}"
+          NEW_VERSION="${NEW_MAJOR}.${NEW_MINOR}.${NEW_PATCH}"
+
+          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "Calculated New Tag: $NEW_TAG"
+
+      # Create Release Branch and Update Files
+      - name: Update Files on Release Branch
+        run: |
+          BRANCH_NAME="release/${NEW_TAG}"
+          git checkout -b "$BRANCH_NAME"
+
+          # Update pyproject.toml and __init__.py
+          sed -i 's/version = "[^"]*"/version = "'"$NEW_VERSION"'"/' pyproject.toml
+          sed -i 's/__version__ = "[^"]*"/__version__ = "'"$NEW_VERSION"'"/' dockdash/__init__.py
+
+          # Update CHANGELOG.md
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PR_NUM="${{ github.event.pull_request.number }}"
+          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+          DATE=$(date +'%Y-%m-%d')
+
+          ENTRY="## [$NEW_TAG] - $DATE\n\n### Merged Feature\n- $PR_TITLE (#$PR_NUM by @$PR_AUTHOR)\n"
+          sed -i "/## \[Unreleased\]/a \\\\\\n$ENTRY" CHANGELOG.md
+
+          # Commit and Push Release Branch
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pyproject.toml dockdash/__init__.py CHANGELOG.md
+          git commit -m "chore(release): prepare release ${NEW_TAG}"
+          git push origin "$BRANCH_NAME" --force
+
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+
+      # Open Automated Release Pull Request
+      - name: Create Pull Request for Release
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ env.BRANCH_NAME }}
+          title: "chore(release): prepare release ${{ env.NEW_TAG }}"
+          commit-message: "chore(release): prepare release ${{ env.NEW_TAG }}"
+          labels: "release"
+          body: |
+            ## Automated Release PR — ${{ env.NEW_TAG }}
+
+            This PR was automatically generated following the merge of PR #${{ github.event.pull_request.number }}.
+
+            ### Included Changes:
+            - **Version Bump**: `${{ env.NEW_TAG }}`
+            - **Updated Files**: `pyproject.toml`, `dockdash/__init__.py`, `CHANGELOG.md`
+
+            ### Next Step for Maintainers:
+            Review and click **Merge pull request** to publish the release binaries to GitHub Releases!
