@@ -30,7 +30,14 @@ from dockdash.screens.system import SystemTab
 from dockdash.screens.volumes import VolumesTab
 
 
-CSS_PATH = Path(__file__).parent / "styles.tcss"
+if getattr(sys, "frozen", False):
+    # PyInstaller bundle path
+    base_dir = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
+    CSS_PATH = base_dir / "dockdash" / "styles.tcss"
+    if not CSS_PATH.exists():
+        CSS_PATH = base_dir / "styles.tcss"
+else:
+    CSS_PATH = Path(__file__).parent / "styles.tcss"
 
 
 class DockerDashApp(App):

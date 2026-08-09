@@ -45,7 +45,7 @@ jobs:
       - name: Build Executable (Linux/macOS)
         if: runner.os != 'Windows'
         run: |
-          pyinstaller --onefile --name dockdash --collect-data textual --collect-data tree_sitter_languages dockdash/app.py
+          pyinstaller --onefile --name dockdash --collect-all textual --collect-all tree_sitter_languages --add-data "dockdash/styles.tcss:dockdash" dockdash/app.py
           tar -czvf "dist/${{ matrix.artifact_name }}-${{ github.ref_name }}.${{ matrix.asset_extension }}" -C dist dockdash
 
       # Windows Build
@@ -53,7 +53,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: powershell
         run: |
-          pyinstaller --onefile --name dockdash --collect-data textual --collect-data tree_sitter_languages dockdash/app.py
+          pyinstaller --onefile --name dockdash --collect-all textual --collect-all tree_sitter_languages --add-data "dockdash/styles.tcss;dockdash" dockdash/app.py
           Compress-Archive -Path dist/dockdash.exe -DestinationPath "dist/${{ matrix.artifact_name }}-${{ github.ref_name }}.${{ matrix.asset_extension }}"
 
       # Upload Platform Release Asset to GitHub Release
