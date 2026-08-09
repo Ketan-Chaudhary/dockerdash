@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [Unreleased]
+\n## [v0.1.1] - 2026-08-09
+
+### Merged Pull Request
+- ci: add PR CI matrix, automated SemVer release workflow, unit tests, … (#1 by @Ketan-Chaudhary)
+
 
 ### Added
 - Automated PR integration checks workflow (`.github/workflows/ci.yml`).
