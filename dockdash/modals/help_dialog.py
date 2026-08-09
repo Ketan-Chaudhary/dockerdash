@@ -10,7 +10,7 @@ from textual.widgets import Button, Static
 
 GLOBAL_SHORTCUTS = [
     ("q / Ctrl+C", "Quit application"),
-    ("1-5", "Jump to tab (Containers/Images/Volumes/Networks/System)"),
+    ("1-6", "Jump to tab (Containers/Images/Volumes/Networks/Compose/System)"),
     ("r / F5", "Refresh current view"),
     ("/", "Open search / filter"),
     ("? / F1", "Show this help"),
@@ -53,6 +53,16 @@ NETWORK_SHORTCUTS = [
     ("i", "Inspect network"),
 ]
 
+COMPOSE_SHORTCUTS = [
+    ("u", "Compose up -d"),
+    ("d", "Compose down"),
+    ("s", "Start stack containers"),
+    ("S", "Stop stack containers"),
+    ("R", "Restart stack containers"),
+    ("l", "View combined stack logs"),
+    ("e", "Edit compose file in editor"),
+    ("p", "Pull stack images"),
+]
 
 SYSTEM_SHORTCUTS = [
     ("c", "Prune stopped containers"),
@@ -97,6 +107,8 @@ class HelpDialog(ModalScreen[None]):
                 yield Static(_render_section("VOLUMES", VOLUME_SHORTCUTS))
                 yield Static("")
                 yield Static(_render_section("NETWORKS", NETWORK_SHORTCUTS))
+                yield Static("")
+                yield Static(_render_section("COMPOSE STACKS", COMPOSE_SHORTCUTS))
                 yield Static("")
                 yield Static(_render_section("SYSTEM & CLEANUP", SYSTEM_SHORTCUTS))
             yield Button("Close", id="close-btn")

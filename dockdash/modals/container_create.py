@@ -1,4 +1,4 @@
-"""Container creation wizard modal with full configuration options."""
+"""Full-screen Container Creation Form — responsive 2-column layout."""
 
 from __future__ import annotations
 
@@ -24,113 +24,178 @@ RESTART_POLICIES = [
 
 
 class ContainerCreateDialog(ModalScreen[dict | None]):
-    """Multi-field container creation form.
-
-    Returns a config dict ready for DockerClient.create_container(),
-    or None if cancelled.
-    """
+    """Full-screen responsive container creation form."""
 
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
+        ("ctrl+s", "create", "Create Container"),
     ]
+
+    DEFAULT_CSS = """
+    ContainerCreateDialog {
+        align: center middle;
+        background: #0d1117;
+    }
+    ContainerCreateDialog .form-container {
+        width: 100%;
+        height: 100%;
+        background: #0d1117;
+    }
+    ContainerCreateDialog .form-header {
+        dock: top;
+        height: 1;
+        background: #161b22;
+        color: #79c0ff;
+        text-style: bold;
+        padding: 0 1;
+        border-bottom: solid #30363d;
+    }
+    ContainerCreateDialog .form-body {
+        height: 1fr;
+        padding: 0 1;
+    }
+    ContainerCreateDialog .form-columns {
+        layout: horizontal;
+        height: auto;
+    }
+    ContainerCreateDialog .form-column {
+        width: 1fr;
+        min-width: 36;
+        padding: 0 1;
+    }
+    ContainerCreateDialog .form-section-title {
+        color: #3fb9a0;
+        text-style: bold;
+        margin: 1 0 0 0;
+    }
+    ContainerCreateDialog Label {
+        color: #8b949e;
+        padding: 0;
+        margin: 0;
+    }
+    ContainerCreateDialog Input {
+        margin: 0 0 1 0;
+        height: 3;
+    }
+    ContainerCreateDialog Select {
+        margin: 0 0 1 0;
+        height: 3;
+    }
+    ContainerCreateDialog Checkbox {
+        margin: 1 2 0 0;
+        padding: 0;
+    }
+    ContainerCreateDialog .form-footer {
+        dock: bottom;
+        height: 3;
+        background: #161b22;
+        padding: 0 2;
+        border-top: solid #30363d;
+        layout: horizontal;
+        align: right middle;
+    }
+    """
 
     def __init__(self, default_image: str = "") -> None:
         super().__init__()
         self._default_image = default_image
 
     def compose(self) -> ComposeResult:
-        with Vertical(classes="modal-dialog") as dialog:
-            dialog.styles.width = "90%"
-            dialog.styles.height = "90%"
-            yield Static("⟨ CREATE CONTAINER ⟩", classes="modal-title")
+        with Vertical(classes="form-container"):
+            yield Static(
+                "⟨ CREATE CONTAINER ⟩  "
+                "[#8b949e]Keys:[/] [#79c0ff bold]Ctrl+S[/] create  "
+                "[#79c0ff bold]Esc[/] cancel",
+                classes="form-header",
+            )
 
-            with VerticalScroll(classes="modal-body"):
-                # ── Required ──
-                yield Static("[#3fb9a0 bold]━━ Image & Name ━━[/]")
-                yield Label("Image [bold](required)[/]")
-                yield Input(
-                    value=self._default_image,
-                    placeholder="e.g. nginx:latest, python:3.12-slim",
-                    id="field-image",
-                )
-                yield Label("Container name")
-                yield Input(
-                    placeholder="e.g. my-web-server (leave empty for auto)",
-                    id="field-name",
-                )
-                yield Label("Command")
-                yield Input(
-                    placeholder='e.g. /bin/sh -c "echo hello"',
-                    id="field-command",
-                )
+            with VerticalScroll(classes="form-body"):
+                with Horizontal(classes="form-columns"):
+                    # ── Left Column: Basic Info & Environment ──
+                    with Vertical(classes="form-column"):
+                        yield Static("━━ Basic Configuration ━━", classes="form-section-title")
+                        yield Label("Image [bold cyan](required)[/]")
+                        yield Input(
+                            value=self._default_image,
+                            placeholder="e.g. nginx:latest, python:3.12-slim",
+                            id="field-image",
+                        )
 
-                # ── Networking ──
-                yield Static("")
-                yield Static("[#3fb9a0 bold]━━ Networking ━━[/]")
-                yield Label("Port mappings  (comma-separated, host:container)")
-                yield Input(
-                    placeholder="e.g. 8080:80, 3000:3000",
-                    id="field-ports",
-                )
-                yield Label("Network")
-                yield Input(
-                    placeholder="e.g. bridge, host, my-network (default: bridge)",
-                    id="field-network",
-                )
+                        yield Label("Container Name")
+                        yield Input(
+                            placeholder="e.g. my-web-server (optional)",
+                            id="field-name",
+                        )
 
-                # ── Volumes ──
-                yield Static("")
-                yield Static("[#3fb9a0 bold]━━ Storage ━━[/]")
-                yield Label("Volume mounts  (comma-separated, host:container[:mode])")
-                yield Input(
-                    placeholder="e.g. /data:/app/data, myvolume:/var/lib/db:ro",
-                    id="field-volumes",
-                )
+                        yield Label("Command")
+                        yield Input(
+                            placeholder='e.g. bash or /bin/sh -c "echo hi"',
+                            id="field-command",
+                        )
 
-                # ── Environment ──
-                yield Static("")
-                yield Static("[#3fb9a0 bold]━━ Environment ━━[/]")
-                yield Label("Environment variables  (comma-separated, KEY=VALUE)")
-                yield Input(
-                    placeholder="e.g. NODE_ENV=production, DB_HOST=localhost",
-                    id="field-env",
-                )
+                        yield Static("━━ Environment & Flags ━━", classes="form-section-title")
+                        yield Label("Environment Variables (KEY=VALUE, ...)")
+                        yield Input(
+                            placeholder="e.g. NODE_ENV=production, PORT=8080",
+                            id="field-env",
+                        )
 
-                # ── Resources ──
-                yield Static("")
-                yield Static("[#3fb9a0 bold]━━ Resources & Policy ━━[/]")
-                yield Label("Memory limit")
-                yield Input(
-                    placeholder="e.g. 512m, 1g (leave empty for unlimited)",
-                    id="field-memory",
-                )
-                yield Label("CPU count")
-                yield Input(
-                    placeholder="e.g. 2 (leave empty for unlimited)",
-                    id="field-cpus",
-                )
-                yield Label("Restart policy")
-                yield Select(
-                    [(text, value) for text, value in RESTART_POLICIES],
-                    value="no",
-                    id="field-restart",
-                )
+                        with Horizontal():
+                            yield Checkbox("Privileged Mode", id="field-privileged")
+                            yield Checkbox("Auto-Remove on Exit", id="field-autoremove")
 
-                # ── Flags ──
-                yield Static("")
-                yield Static("[#3fb9a0 bold]━━ Options ━━[/]")
-                yield Checkbox("Privileged mode", id="field-privileged")
-                yield Checkbox("Auto-remove on exit", id="field-autoremove")
+                    # ── Right Column: Policy, Resources & Storage ──
+                    with Vertical(classes="form-column"):
+                        yield Static("━━ Policy & Limits ━━", classes="form-section-title")
+                        yield Label("Restart Policy")
+                        yield Select(
+                            [(text, value) for text, value in RESTART_POLICIES],
+                            value="no",
+                            id="field-restart",
+                        )
 
-            with Horizontal(classes="modal-footer"):
-                yield Button("Cancel", id="cancel-btn")
-                yield Button("Create", id="create-btn", variant="primary")
+                        with Horizontal():
+                            with Vertical(classes="form-column"):
+                                yield Label("Memory Limit")
+                                yield Input(
+                                    placeholder="e.g. 512m, 1g",
+                                    id="field-memory",
+                                )
+                            with Vertical(classes="form-column"):
+                                yield Label("CPU Count")
+                                yield Input(
+                                    placeholder="e.g. 2",
+                                    id="field-cpus",
+                                )
+
+                        yield Static("━━ Network & Storage ━━", classes="form-section-title")
+                        yield Label("Port Mappings (host:container, ...)")
+                        yield Input(
+                            placeholder="e.g. 8080:80, 3000:3000",
+                            id="field-ports",
+                        )
+
+                        yield Label("Volume Mounts (host:container[:mode], ...)")
+                        yield Input(
+                            placeholder="e.g. /data:/app/data, vol:/db:ro",
+                            id="field-volumes",
+                        )
+
+                        yield Label("Network")
+                        yield Input(
+                            placeholder="e.g. bridge, host, my-net (default: bridge)",
+                            id="field-network",
+                        )
+
+            # ── Docked Bottom Footer ──
+            with Horizontal(classes="form-footer"):
+                yield Button("Cancel [Esc]", id="cancel-btn")
+                yield Button("Create Container [Ctrl+S]", id="create-btn", variant="primary")
 
     def on_mount(self) -> None:
         self.query_one("#field-image", Input).focus()
 
     def _parse_ports(self, raw: str) -> dict | None:
-        """Parse '8080:80, 3000:3000' into docker-py port dict."""
         if not raw.strip():
             return None
         ports = {}
@@ -151,7 +216,6 @@ class ContainerCreateDialog(ModalScreen[dict | None]):
         return ports if ports else None
 
     def _parse_volumes(self, raw: str) -> dict | None:
-        """Parse '/data:/app/data, vol:/db:ro' into docker-py volume dict."""
         if not raw.strip():
             return None
         volumes = {}
@@ -166,7 +230,6 @@ class ContainerCreateDialog(ModalScreen[dict | None]):
         return volumes if volumes else None
 
     def _parse_env(self, raw: str) -> list | None:
-        """Parse 'KEY=VAL, KEY2=VAL2' into list of strings."""
         if not raw.strip():
             return None
         env = []
@@ -180,7 +243,10 @@ class ContainerCreateDialog(ModalScreen[dict | None]):
         if event.button.id == "cancel-btn":
             self.dismiss(None)
             return
+        elif event.button.id == "create-btn":
+            self.action_create()
 
+    def action_create(self) -> None:
         image = self.query_one("#field-image", Input).value.strip()
         if not image:
             self.query_one("#field-image", Input).add_class("-invalid")

@@ -463,6 +463,172 @@ class DockerClient:
         results["networks"] = await self._run_sync(self.client.networks.prune)
         return results
 
+    # ── Docker Compose Operations ─────────────────────────────────────
+
+    @_handle_errors
+    async def list_compose_projects(self) -> list[dict]:
+        """List Docker Compose projects from running containers & local compose files."""
+        import os
+        from pathlib import Path
+
+        containers = await self.list_containers(all=True)
+        projects: dict[str, dict] = {}
+
+        # Group containers by compose project label
+        for c in containers:
+            try:
+                raw_c = await self._run_sync(self.client.containers.get, c["full_id"])
+                labels = raw_c.attrs.get("Config", {}).get("Labels", {}) or {}
+            except Exception:
+                labels = {}
+
+            proj_name = labels.get("com.docker.compose.project")
+            service_name = labels.get("com.docker.compose.service", c["name"])
+            config_file = labels.get("com.docker.compose.project.config_files", "")
+            work_dir = labels.get("com.docker.compose.project.working_dir", "")
+
+            if proj_name:
+                if proj_name not in projects:
+                    projects[proj_name] = {
+                        "name": proj_name,
+                        "config_file": config_file.split(",")[0] if config_file else "",
+                        "working_dir": work_dir,
+                        "status": "running",
+                        "services": [],
+                        "is_local": False,
+                    }
+
+                projects[proj_name]["services"].append({
+                    "id": c["id"],
+                    "full_id": c["full_id"],
+                    "name": service_name,
+                    "container_name": c["name"],
+                    "image": c["image"],
+                    "status": c["status"],
+                    "state": c["state"],
+                    "ports": c["ports"],
+                })
+
+        # Calculate status summaries for container-based compose projects
+        for proj in projects.values():
+            running_count = sum(1 for s in proj["services"] if s["status"] == "running")
+            total_count = len(proj["services"])
+            if running_count == total_count and total_count > 0:
+                proj["status"] = "running"
+            elif running_count > 0:
+                proj["status"] = "partial"
+            else:
+                proj["status"] = "stopped"
+
+        # Search current working directory & parent for local compose files
+        cwd = Path.cwd()
+        candidate_files = [
+            cwd / "docker-compose.yml",
+            cwd / "docker-compose.yaml",
+            cwd / "compose.yml",
+            cwd / "compose.yaml",
+        ]
+        for cf in candidate_files:
+            if cf.is_file():
+                local_name = cf.parent.name.lower()
+                if local_name not in projects:
+                    projects[local_name] = {
+                        "name": local_name,
+                        "config_file": str(cf),
+                        "working_dir": str(cf.parent),
+                        "status": "stopped",
+                        "services": [],
+                        "is_local": True,
+                    }
+                else:
+                    projects[local_name]["config_file"] = str(cf)
+                    projects[local_name]["working_dir"] = str(cf.parent)
+                    projects[local_name]["is_local"] = True
+
+        return list(projects.values())
+
+    @_handle_errors
+    async def run_compose_action(
+        self, project_name: str, action: str, config_file: str = "", working_dir: str = ""
+    ) -> tuple[int, str]:
+        """Run a docker compose action (up, down, start, stop, restart, pull)."""
+        import os
+        import shutil
+
+        # Determine binary (docker compose vs docker-compose)
+        docker_bin = shutil.which("docker")
+        compose_bin = shutil.which("docker-compose")
+
+        cmd = []
+        if docker_bin:
+            cmd = [docker_bin, "compose"]
+        elif compose_bin:
+            cmd = [compose_bin]
+        else:
+            raise DockerClientError("Neither 'docker compose' nor 'docker-compose' CLI found on host system.")
+
+        if config_file and os.path.isfile(config_file):
+            cmd.extend(["-f", config_file])
+        elif project_name:
+            cmd.extend(["-p", project_name])
+
+        if action == "up":
+            cmd.extend(["up", "-d"])
+        elif action in ("down", "start", "stop", "restart", "pull"):
+            cmd.append(action)
+        else:
+            cmd.append(action)
+
+        cwd = working_dir if (working_dir and os.path.isdir(working_dir)) else None
+
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=cwd,
+        )
+        stdout, stderr = await process.communicate()
+        output = (stdout.decode("utf-8", errors="replace") + "\n" + stderr.decode("utf-8", errors="replace")).strip()
+        return process.returncode or 0, output
+
+    @_handle_errors
+    async def get_compose_logs(
+        self, project_name: str, config_file: str = "", working_dir: str = "", tail: int = 500
+    ) -> str:
+        """Fetch logs for a docker compose project."""
+        import os
+        import shutil
+
+        docker_bin = shutil.which("docker")
+        compose_bin = shutil.which("docker-compose")
+
+        cmd = []
+        if docker_bin:
+            cmd = [docker_bin, "compose"]
+        elif compose_bin:
+            cmd = [compose_bin]
+        else:
+            raise DockerClientError("Neither 'docker compose' nor 'docker-compose' CLI found on host system.")
+
+        if config_file and os.path.isfile(config_file):
+            cmd.extend(["-f", config_file])
+        elif project_name:
+            cmd.extend(["-p", project_name])
+
+        cmd.extend(["logs", "--tail", str(tail), "--timestamps"])
+
+        cwd = working_dir if (working_dir and os.path.isdir(working_dir)) else None
+
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=cwd,
+        )
+        stdout, stderr = await process.communicate()
+        output = stdout.decode("utf-8", errors="replace") + "\n" + stderr.decode("utf-8", errors="replace")
+        return output.strip()
+
     # ── Utility ───────────────────────────────────────────────────────
 
     @staticmethod
