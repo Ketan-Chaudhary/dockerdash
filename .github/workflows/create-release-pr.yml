@@ -79,8 +79,10 @@ jobs:
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
           echo "Calculated New Tag: $NEW_TAG"
 
-      # Create Release Branch and Update Files
-      - name: Update Files on Release Branch
+      # Create Release Branch, Update Files, and Open Pull Request
+      - name: Create Release Branch & Open PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           BRANCH_NAME="release/${NEW_TAG}"
           git checkout -b "$BRANCH_NAME"
@@ -105,25 +107,21 @@ jobs:
           git commit -m "chore(release): prepare release ${NEW_TAG}"
           git push origin "$BRANCH_NAME" --force
 
-          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          # Create Pull Request targeting main via native GitHub CLI
+          PR_BODY="## Automated Release PR — ${NEW_TAG}
 
-      # Open Automated Release Pull Request
-      - name: Create Pull Request for Release
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ env.BRANCH_NAME }}
-          title: "chore(release): prepare release ${{ env.NEW_TAG }}"
-          commit-message: "chore(release): prepare release ${{ env.NEW_TAG }}"
-          labels: "release"
-          body: |
-            ## Automated Release PR — ${{ env.NEW_TAG }}
+          This PR was automatically generated following the merge of PR #${PR_NUM}.
 
-            This PR was automatically generated following the merge of PR #${{ github.event.pull_request.number }}.
+          ### Included Changes:
+          - **Version Bump**: \`${NEW_TAG}\`
+          - **Updated Files**: \`pyproject.toml\`, \`dockdash/__init__.py\`, \`CHANGELOG.md\`
 
-            ### Included Changes:
-            - **Version Bump**: `${{ env.NEW_TAG }}`
-            - **Updated Files**: `pyproject.toml`, `dockdash/__init__.py`, `CHANGELOG.md`
+          ### Next Step for Maintainers:
+          Review and click **Merge pull request** to publish the release binaries to GitHub Releases!"
 
-            ### Next Step for Maintainers:
-            Review and click **Merge pull request** to publish the release binaries to GitHub Releases!
+          gh pr create \
+            --base main \
+            --head "$BRANCH_NAME" \
+            --title "chore(release): prepare release ${NEW_TAG}" \
+            --body "$PR_BODY" \
+            --label "release" || echo "Pull request for $BRANCH_NAME already exists"
