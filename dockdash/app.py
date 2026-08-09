@@ -23,6 +23,7 @@ from textual.widgets import (
 from dockdash import __app_name__, __version__
 from dockdash.docker_client import DockerClient
 from dockdash.modals.help_dialog import HelpDialog
+from dockdash.screens.compose import ComposeTab
 from dockdash.screens.containers import ContainersTab
 from dockdash.screens.images import ImagesTab
 from dockdash.screens.networks import NetworksTab
@@ -57,7 +58,8 @@ class DockerDashApp(App):
         Binding("2", "tab_2", "Images", show=False, priority=True),
         Binding("3", "tab_3", "Volumes", show=False, priority=True),
         Binding("4", "tab_4", "Networks", show=False, priority=True),
-        Binding("5", "tab_5", "System", show=False, priority=True),
+        Binding("5", "tab_5", "Compose", show=False, priority=True),
+        Binding("6", "tab_6", "System", show=False, priority=True),
     ]
 
     def __init__(self) -> None:
@@ -91,6 +93,7 @@ class DockerDashApp(App):
                 "Images",
                 "Volumes",
                 "Networks",
+                "Compose",
                 "System",
                 id="main-tabs",
             ):
@@ -102,6 +105,8 @@ class DockerDashApp(App):
                     yield VolumesTab(id="volumes-tab")
                 with TabPane("Networks", id="tab-networks"):
                     yield NetworksTab(id="networks-tab")
+                with TabPane("Compose", id="tab-compose"):
+                    yield ComposeTab(id="compose-tab")
                 with TabPane("System", id="tab-system"):
                     yield SystemTab(id="system-tab")
 
@@ -141,11 +146,14 @@ class DockerDashApp(App):
         self._switch_tab("tab-networks")
 
     def action_tab_5(self) -> None:
+        self._switch_tab("tab-compose")
+
+    def action_tab_6(self) -> None:
         self._switch_tab("tab-system")
 
     def on_key(self, event) -> None:
         """Global key interceptor for tab switching."""
-        if event.key in ("1", "2", "3", "4", "5"):
+        if event.key in ("1", "2", "3", "4", "5", "6"):
             # Don't intercept if user is typing in a text Input box
             focused = self.focused
             if focused and focused.__class__.__name__ == "Input":
@@ -155,7 +163,8 @@ class DockerDashApp(App):
                 "2": "tab-images",
                 "3": "tab-volumes",
                 "4": "tab-networks",
-                "5": "tab-system",
+                "5": "tab-compose",
+                "6": "tab-system",
             }
             tab_id = key_map.get(event.key)
             if tab_id:
@@ -189,6 +198,7 @@ class DockerDashApp(App):
             "tab-images": ("#images-tab", ImagesTab),
             "tab-volumes": ("#volumes-tab", VolumesTab),
             "tab-networks": ("#networks-tab", NetworksTab),
+            "tab-compose": ("#compose-tab", ComposeTab),
             "tab-system": ("#system-tab", SystemTab),
         }
 

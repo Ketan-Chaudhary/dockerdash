@@ -1,4 +1,4 @@
-"""Unit tests for DockerDashApp TUI navigation and screens."""
+"""Unit tests for DockerDashApp TUI navigation, ComposeTab, and screens."""
 
 import pytest
 from dockdash.app import DockerDashApp
@@ -25,3 +25,12 @@ async def test_help_modal():
         await pilot.press("escape")
         await pilot.pause()
         assert app.screen.__class__.__name__ != "HelpDialog"
+
+
+@pytest.mark.asyncio
+async def test_compose_tab_presence():
+    app = DockerDashApp()
+    async with app.run_test(size=(120, 40)) as pilot:
+        await pilot.pause()
+        compose_tab = app.query_one("#compose-tab")
+        assert compose_tab is not None

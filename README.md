@@ -19,6 +19,7 @@
 - **Dockerfile Editor**: Built-in full-screen editor (`e`) with line numbers, code editing, file saving, and direct image building.
 - **Container Creation Wizard**: Multi-field form for configuring images, ports, volume mounts, environment variables, restart policies, and resource limits.
 - **Volumes & Networks**: Inspect, create, and remove Docker volumes and networks with built-in network protection.
+- **Docker Compose Stacks**: Manage multi-container stacks automatically grouped by project labels or local `docker-compose.yml` files. Supports `up` (`u`), `down` (`d`), `start` (`s`), `stop` (`S`), `restart` (`R`), `pull` (`p`), combined full-screen stack logs (`l`), and full-screen compose file editor (`e`).
 - **System Overview & Disk Cleanup**: Real-time Engine information, disk usage breakdown, and prune tools for containers, images, volumes, networks, or full system prune (`x`).
 - **Keyboard-Driven Traversal**: Seamless focus traversal across interactive controls using Arrow keys (`←` `→` `↑` `↓`), `Tab`, and context keybindings.
 
