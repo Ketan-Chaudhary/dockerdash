@@ -1,0 +1,129 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  # ── Build Native Binaries Matrix ───────────────────────────────────
+  build-matrix:
+    name: Build Native Binary (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            asset_name: dockdash-linux-x86_64
+            archive_ext: tar.gz
+          - os: windows-latest
+            asset_name: dockdash-windows-amd64
+            archive_ext: zip
+          - os: macos-latest
+            asset_name: dockdash-macos-arm64
+            archive_ext: tar.gz
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Extract Version Tag
+        id: tag
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          echo "TAG_NAME=$TAG" >> $GITHUB_ENV
+
+      - name: Install Dependencies & PyInstaller
+        run: |
+          python -m pip install --upgrade pip
+          pip install . build PyInstaller
+
+      # Build Native Executable on Linux/macOS
+      - name: Build Executable (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          pyinstaller --onefile --name dockdash --collect-all textual --collect-all tree_sitter_languages --add-data "dockdash/styles.tcss:dockdash" dockdash/app.py
+          tar -czvf "dist/${{ matrix.asset_name }}-${{ env.TAG_NAME }}.tar.gz" -C dist dockdash
+
+      # Build Native Executable on Windows (.exe)
+      - name: Build Executable (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          pyinstaller --onefile --name dockdash --collect-all textual --collect-all tree_sitter_languages --add-data "dockdash/styles.tcss;dockdash" dockdash/app.py
+          Compress-Archive -Path dist/dockdash.exe -DestinationPath "dist/${{ matrix.asset_name }}-${{ env.TAG_NAME }}.zip"
+
+      # Upload Native Binary Artifact
+      - name: Upload Native Binary Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.asset_name }}
+          path: dist/*-${{ env.TAG_NAME }}.*
+
+  # ── Build Universal Python Wheels & Source ─────────────────────────
+  build-packages:
+    name: Build Python Wheels & Source
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Build Tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+
+      - name: Build Wheel & Source Tarball
+        run: |
+          python -m build
+
+      - name: Upload Python Package Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-packages
+          path: dist/*
+
+  # ── Publish Official GitHub Release ────────────────────────────────
+  publish-release:
+    name: Publish Official GitHub Release
+    needs: [build-matrix, build-packages]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download All Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Extract Tag Name
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          echo "TAG_NAME=$TAG" >> $GITHUB_ENV
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          name: "DockDash ${{ env.TAG_NAME }}"
+          generate_release_notes: true
+          files: |
+            release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

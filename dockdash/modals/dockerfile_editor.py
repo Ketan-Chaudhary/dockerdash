@@ -10,7 +10,6 @@ from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Button, Input, Label, Static, TextArea
 
-
 DEFAULT_DOCKERFILE = """\
 # ─── Dockerfile ───────────────────────────────────────────────
 # Build your container image

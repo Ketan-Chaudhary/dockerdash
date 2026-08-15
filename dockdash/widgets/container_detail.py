@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import json
-
 from textual.app import ComposeResult
-from textual.containers import Vertical, VerticalScroll
+from textual.containers import VerticalScroll
 from textual.widgets import Static
 
 from dockdash.docker_client import DockerClient
@@ -87,7 +85,7 @@ class ContainerDetail(VerticalScroll):
             restart_str += f" (max {restart['MaximumRetryCount']})"
 
         content = "\n".join([
-            f"[#3fb9a0 bold]━━ Overview ━━[/]",
+            "[#3fb9a0 bold]━━ Overview ━━[/]",
             _kv("Name", name),
             _kv("ID", attrs.get("Id", "")[:12]),
             _kv("Image", image),
@@ -97,15 +95,15 @@ class ContainerDetail(VerticalScroll):
             _kv("Command", cmd_str),
             _kv("Restart", restart_str),
             "",
-            f"[#3fb9a0 bold]━━ Networking ━━[/]",
+            "[#3fb9a0 bold]━━ Networking ━━[/]",
             _kv("Ports", port_str),
-            f"  [#8b949e bold]Networks[/]",
+            "  [#8b949e bold]Networks[/]",
             net_lines or "    [dim]none[/]",
             "",
-            f"[#3fb9a0 bold]━━ Mounts ━━[/]",
+            "[#3fb9a0 bold]━━ Mounts ━━[/]",
             mount_lines or "    [dim]none[/]",
             "",
-            f"[#3fb9a0 bold]━━ Environment ━━[/]",
+            "[#3fb9a0 bold]━━ Environment ━━[/]",
             env_lines or "    [dim]none[/]",
         ])
 

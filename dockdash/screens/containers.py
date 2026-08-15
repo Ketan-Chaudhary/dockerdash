@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import subprocess
 import sys
 
@@ -119,11 +118,6 @@ class ContainersTab(Vertical):
         table = self.query_one("#container-table", DataTable)
         if table.row_count == 0:
             return None
-        try:
-            row_key = table.get_row_at(table.cursor_row)
-        except Exception:
-            return None
-
         cursor_row = table.cursor_row
         if cursor_row < len(self._filtered):
             return self._filtered[cursor_row]

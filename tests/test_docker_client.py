@@ -1,6 +1,5 @@
 """Unit tests for DockerClient formatting and utilities."""
 
-import pytest
 from dockdash.docker_client import DockerClient, DockerClientError
 
 
