@@ -1,14 +1,40 @@
-name: Pull Request CI
+name: CI
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
 
 jobs:
-  # ── Test Suite ──────────────────────────────────────────────────
+  # ── Code Quality & Linting ──────────────────────────────────────────
+  lint:
+    name: Code Quality (Ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Ruff Linter
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+
+      - name: Run Ruff Lint Check
+        run: |
+          ruff check .
+
+  # ── Unit Test Matrix (Linux, Windows, macOS) ──────────────────────
   test:
-    name: Run Unit Tests (${{ matrix.os }})
+    name: Run Unit Tests (${{ matrix.os }} - Python ${{ matrix.python-version }})
+    needs: lint
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -34,11 +60,11 @@ jobs:
         run: |
           python -m pytest
 
-  # ── Verification Build (No Push / No Release) ────────────────────
-  build-verification:
+  # ── Executable Build Verification Matrix ──────────────────────────
+  build-check:
     name: Verify Build (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
     needs: test
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -58,17 +84,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install . build PyInstaller
 
-      - name: Test Build Executable (Linux/macOS)
+      - name: Verify Executable Build (Linux/macOS)
         if: runner.os != 'Windows'
         run: |
           pyinstaller --onefile --name dockdash --collect-all textual --collect-all tree_sitter_languages --add-data "dockdash/styles.tcss:dockdash" dockdash/app.py
 
-      - name: Test Build Executable (Windows)
+      - name: Verify Executable Build (Windows)
         if: runner.os == 'Windows'
         shell: powershell
         run: |
           pyinstaller --onefile --name dockdash --collect-all textual --collect-all tree_sitter_languages --add-data "dockdash/styles.tcss;dockdash" dockdash/app.py
 
-      - name: Test Python Wheel Build
+      - name: Verify Python Package Build
         run: |
           python -m build

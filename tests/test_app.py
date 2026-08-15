@@ -1,6 +1,7 @@
 """Unit tests for DockerDashApp TUI navigation, ComposeTab, and screens."""
 
 import pytest
+
 from dockdash.app import DockerDashApp
 
 

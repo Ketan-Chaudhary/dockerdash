@@ -30,7 +30,6 @@ from dockdash.screens.networks import NetworksTab
 from dockdash.screens.system import SystemTab
 from dockdash.screens.volumes import VolumesTab
 
-
 if getattr(sys, "frozen", False):
     # PyInstaller bundle path
     base_dir = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
@@ -73,20 +72,19 @@ class DockerDashApp(App):
 
         if not self._connected:
             # Show connection error
-            with Center():
-                with Vertical(classes="error-panel"):
-                    yield Static(
-                        "⟨ CONNECTION ERROR ⟩",
-                        classes="error-title",
-                    )
-                    yield Static(
-                        "\nCannot connect to Docker daemon.\n\n"
-                        "Make sure Docker is installed and running:\n"
-                        "  [#79c0ff]sudo systemctl start docker[/]\n"
-                        "  [#79c0ff]sudo usermod -aG docker $USER[/]\n\n"
-                        "Then restart DockDash.",
-                        classes="error-message",
-                    )
+            with Center(), Vertical(classes="error-panel"):
+                yield Static(
+                    "⟨ CONNECTION ERROR ⟩",
+                    classes="error-title",
+                )
+                yield Static(
+                    "\nCannot connect to Docker daemon.\n\n"
+                    "Make sure Docker is installed and running:\n"
+                    "  [#79c0ff]sudo systemctl start docker[/]\n"
+                    "  [#79c0ff]sudo usermod -aG docker $USER[/]\n\n"
+                    "Then restart DockDash.",
+                    classes="error-message",
+                )
         else:
             with TabbedContent(
                 "Containers",

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import asyncio
 from functools import wraps
-from typing import Any, Optional
+from typing import Any
 
 import docker
 from docker.errors import (
@@ -468,7 +468,6 @@ class DockerClient:
     @_handle_errors
     async def list_compose_projects(self) -> list[dict]:
         """List Docker Compose projects from running containers & local compose files."""
-        import os
         from pathlib import Path
 
         containers = await self.list_containers(all=True)
@@ -632,7 +631,7 @@ class DockerClient:
     # ── Utility ───────────────────────────────────────────────────────
 
     @staticmethod
-    def format_bytes(size: int | float) -> str:
+    def format_bytes(size: float) -> str:
         """Format byte count to human-readable string."""
         for unit in ("B", "KB", "MB", "GB", "TB"):
             if abs(size) < 1024.0:

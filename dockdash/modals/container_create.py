@@ -14,7 +14,6 @@ from textual.widgets import (
     Static,
 )
 
-
 RESTART_POLICIES = [
     ("No restart", "no"),
     ("Always", "always"),

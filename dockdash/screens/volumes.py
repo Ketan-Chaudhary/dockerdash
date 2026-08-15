@@ -9,7 +9,7 @@ from textual.widgets import DataTable, Static
 
 from dockdash.docker_client import DockerClient, DockerClientError
 from dockdash.modals.confirm_dialog import ConfirmDialog
-from dockdash.modals.input_dialog import InputDialog, MultiInputDialog
+from dockdash.modals.input_dialog import MultiInputDialog
 from dockdash.modals.inspect_dialog import InspectDialog
 from dockdash.widgets.search_bar import SearchBar
 

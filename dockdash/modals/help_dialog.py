@@ -7,7 +7,6 @@ from textual.containers import Vertical, VerticalScroll
 from textual.screen import ModalScreen
 from textual.widgets import Button, Static
 
-
 GLOBAL_SHORTCUTS = [
     ("q / Ctrl+C", "Quit application"),
     ("1-6", "Jump to tab (Containers/Images/Volumes/Networks/Compose/System)"),

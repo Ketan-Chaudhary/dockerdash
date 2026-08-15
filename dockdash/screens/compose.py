@@ -143,7 +143,7 @@ class ComposeTab(Vertical):
         else:
             lines.append("[#8b949e italic]No containers currently running for this stack.[/]\n")
             if proj.get("config_file"):
-                lines.append(f"[#79c0ff]Press [#f0f6fc bold]u[/] to run [#f0f6fc bold]docker compose up -d[/][/]")
+                lines.append("[#79c0ff]Press [#f0f6fc bold]u[/] to run [#f0f6fc bold]docker compose up -d[/][/]")
 
         detail.update("\n".join(lines))
 
