@@ -31,6 +31,7 @@ class ComposeTab(Vertical):
         Binding("slash", "search", "Search", show=False),
         Binding("j", "cursor_down", "Down", show=False),
         Binding("k", "cursor_up", "Up", show=False),
+        Binding("escape", "close_side_panel", "Close Panel", show=False),
     ]
 
     def __init__(self, **kwargs) -> None:
@@ -174,6 +175,12 @@ class ComposeTab(Vertical):
 
     def action_cursor_up(self) -> None:
         self.query_one("#compose-table", DataTable).action_cursor_up()
+
+    def action_close_side_panel(self) -> None:
+        side = self.query_one("#compose-side")
+        if side.styles.display != "none":
+            side.styles.display = "none"
+            self.query_one("#compose-table", DataTable).focus()
 
     # ── Compose Actions ───────────────────────────────────────────────
 
