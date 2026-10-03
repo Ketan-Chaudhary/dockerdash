@@ -38,6 +38,7 @@ jobs:
 
       - name: Extract Version Tag
         id: tag
+        shell: bash
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
           echo "TAG_NAME=$TAG" >> $GITHUB_ENV
