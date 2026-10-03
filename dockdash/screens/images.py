@@ -75,7 +75,7 @@ class ImagesTab(Vertical):
                 img["id"],
                 size_str,
                 created,
-                key=img["full_id"],
+                key=f"{img['full_id']}:{img['repository']}:{img['tag']}",
             )
 
     def _get_selected_image(self) -> dict | None:

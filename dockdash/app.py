@@ -150,10 +150,20 @@ class DockerDashApp(App):
         self._switch_tab("tab-system")
 
     def on_key(self, event) -> None:
-        """Global key interceptor for tab switching."""
+        """Global key interceptor for tab switching and tab-bar navigation."""
+        focused = self.focused
+
+        # When focused on the tab bar, pressing down arrow enters the active tab content
+        if event.key == "down" and focused is not None:
+            class_name = type(focused).__name__
+            if class_name in ("ContentTabs", "Tab", "Tabs", "Underline"):
+                self._focus_active_tab_content()
+                event.prevent_default()
+                event.stop()
+                return
+
         if event.key in ("1", "2", "3", "4", "5", "6"):
             # Don't intercept if user is typing in a text Input box
-            focused = self.focused
             if focused and focused.__class__.__name__ == "Input":
                 return
             key_map = {
@@ -167,6 +177,30 @@ class DockerDashApp(App):
             tab_id = key_map.get(event.key)
             if tab_id:
                 self._switch_tab(tab_id)
+
+    def _focus_active_tab_content(self) -> None:
+        """Move focus to the first focusable widget inside the active tab pane."""
+        try:
+            from textual.widgets import DataTable
+            tabs = self.query_one("#main-tabs", TabbedContent)
+            active_pane = tabs.query_one(f"#{tabs.active}")
+
+            # Prefer focusing the DataTable (lists) first
+            data_tables = active_pane.query(DataTable)
+            if data_tables:
+                data_tables.first().focus()
+                return
+
+            # Fallback to the first focusable widget
+            for child in active_pane.walk_children():
+                if child.can_focus:
+                    # Skip Input widgets if they are part of a hidden SearchBar
+                    if child.__class__.__name__ == "Input" and child.parent and child.parent.styles.display == "none":
+                        continue
+                    child.focus()
+                    return
+        except Exception:
+            pass
 
     def _switch_tab(self, tab_id: str) -> None:
         try:
