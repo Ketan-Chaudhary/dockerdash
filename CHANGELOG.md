@@ -25,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Prevented UI lag during tab switches by adding a `0.3s` non-blocking delay to allow the tab transition animation to finish smoothly before triggering data fetch.
 - Replaced synchronous API calls with Textual `@work(exclusive=True)` background workers across all tabs to prevent overlapping requests and keep the UI responsive.
 
+## [v0.1.4] - 2026-08-09
+
+### Merged Feature
+- fix(ci): use gh pr create in create-release-pr workflow to eliminate branch mismatch and node deprecation errors (#11 by @Ketan-Chaudhary)
+
 ## [v0.1.3] - 2026-08-09
 
 ### Merged Feature
