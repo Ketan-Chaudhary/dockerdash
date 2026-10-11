@@ -64,19 +64,34 @@ class ImagesTab(Vertical):
             self.notify(str(e), severity="error")
 
     def _update_table(self) -> None:
-        table = self.query_one("#image-table", DataTable)
-        table.clear()
-        for img in self._filtered:
-            size_str = DockerClient.format_bytes(img.get("size", 0))
-            created = img.get("created", "")[:19]
-            table.add_row(
-                img["repository"],
-                img["tag"],
-                img["id"],
-                size_str,
-                created,
-                key=f"{img['full_id']}:{img['repository']}:{img['tag']}",
-            )
+        with self.app.batch_update():
+            table = self.query_one("#image-table", DataTable)
+            current_keys = {row_key.value for row_key in table.rows.keys()}
+            new_keys = {f"{img['full_id']}:{img['repository']}:{img['tag']}" for img in self._filtered}
+
+            for key in current_keys - new_keys:
+                table.remove_row(key)
+
+            columns = list(table.columns.keys())
+
+            for img in self._filtered:
+                size_str = DockerClient.format_bytes(img.get("size", 0))
+                created = img.get("created", "")[:19]
+
+                row_data = (
+                    img["repository"],
+                    img["tag"],
+                    img["id"],
+                    size_str,
+                    created,
+                )
+                key = f"{img['full_id']}:{img['repository']}:{img['tag']}"
+
+                if key in current_keys:
+                    for col_key, cell_val in zip(columns, row_data):
+                        table.update_cell(key, col_key, cell_val, update_width=True)
+                else:
+                    table.add_row(*row_data, key=key)
 
     def _get_selected_image(self) -> dict | None:
         table = self.query_one("#image-table", DataTable)

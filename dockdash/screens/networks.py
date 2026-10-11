@@ -55,17 +55,31 @@ class NetworksTab(Vertical):
             self.notify(str(e), severity="error")
 
     def _update_table(self) -> None:
-        table = self.query_one("#network-table", DataTable)
-        table.clear()
-        for n in self._filtered:
-            table.add_row(
-                n["name"],
-                n["id"],
-                n["driver"],
-                n["scope"],
-                str(n.get("containers", 0)),
-                key=n["full_id"],
-            )
+        with self.app.batch_update():
+            table = self.query_one("#network-table", DataTable)
+            current_keys = {row_key.value for row_key in table.rows.keys()}
+            new_keys = {n["full_id"] for n in self._filtered}
+
+            for key in current_keys - new_keys:
+                table.remove_row(key)
+
+            columns = list(table.columns.keys())
+
+            for n in self._filtered:
+                row_data = (
+                    n["name"],
+                    n["id"],
+                    n["driver"],
+                    n["scope"],
+                    str(n.get("containers", 0)),
+                )
+                key = n["full_id"]
+
+                if key in current_keys:
+                    for col_key, cell_val in zip(columns, row_data):
+                        table.update_cell(key, col_key, cell_val, update_width=True)
+                else:
+                    table.add_row(*row_data, key=key)
 
     def _get_selected_network(self) -> dict | None:
         table = self.query_one("#network-table", DataTable)

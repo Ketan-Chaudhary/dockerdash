@@ -55,21 +55,35 @@ class VolumesTab(Vertical):
             self.notify(str(e), severity="error")
 
     def _update_table(self) -> None:
-        table = self.query_one("#volume-table", DataTable)
-        table.clear()
-        for v in self._filtered:
-            created = v.get("created", "")[:19]
-            mountpoint = v.get("mountpoint", "")
-            # Truncate long mountpoints
-            if len(mountpoint) > 50:
-                mountpoint = "..." + mountpoint[-47:]
-            table.add_row(
-                v["name"],
-                v["driver"],
-                mountpoint,
-                created,
-                key=v["name"],
-            )
+        with self.app.batch_update():
+            table = self.query_one("#volume-table", DataTable)
+            current_keys = {row_key.value for row_key in table.rows.keys()}
+            new_keys = {v["name"] for v in self._filtered}
+
+            for key in current_keys - new_keys:
+                table.remove_row(key)
+
+            columns = list(table.columns.keys())
+
+            for v in self._filtered:
+                created = v.get("created", "")[:19]
+                mountpoint = v.get("mountpoint", "")
+                if len(mountpoint) > 50:
+                    mountpoint = "..." + mountpoint[-47:]
+
+                row_data = (
+                    v["name"],
+                    v["driver"],
+                    mountpoint,
+                    created,
+                )
+                key = v["name"]
+
+                if key in current_keys:
+                    for col_key, cell_val in zip(columns, row_data):
+                        table.update_cell(key, col_key, cell_val, update_width=True)
+                else:
+                    table.add_row(*row_data, key=key)
 
     def _get_selected_volume(self) -> dict | None:
         table = self.query_one("#volume-table", DataTable)

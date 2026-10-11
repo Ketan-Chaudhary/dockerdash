@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 
+from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
@@ -74,33 +75,46 @@ class ComposeTab(Vertical):
             self.notify(str(e), severity="error")
 
     def _update_table(self) -> None:
-        table = self.query_one("#compose-table", DataTable)
-        table.clear()
+        with self.app.batch_update():
+            table = self.query_one("#compose-table", DataTable)
+            current_keys = {row_key.value for row_key in table.rows.keys()}
+            new_keys = {proj["name"] for proj in self._filtered}
 
-        for proj in self._filtered:
-            status = proj.get("status", "stopped")
-            if status == "running":
-                status_markup = "[#3fb950 bold]▸ RUNNING[/]"
-            elif status == "partial":
-                status_markup = "[#d29922 bold]PARTIAL[/]"
-            else:
-                status_markup = "[#f85149]■ STOPPED[/]"
+            for key in current_keys - new_keys:
+                table.remove_row(key)
 
-            services = proj.get("services", [])
-            running_cnt = sum(1 for s in services if s["status"] == "running")
-            svc_str = f"{running_cnt}/{len(services)}" if services else "0 (local file)"
+            columns = list(table.columns.keys())
 
-            config_file = proj.get("config_file") or "—"
-            work_dir = proj.get("working_dir") or "—"
+            for proj in self._filtered:
+                status = proj.get("status", "stopped")
+                if status == "running":
+                    status_markup = "[#3fb950 bold]▸ RUNNING[/]"
+                elif status == "partial":
+                    status_markup = "[#d29922 bold]PARTIAL[/]"
+                else:
+                    status_markup = "[#f85149]■ STOPPED[/]"
 
-            table.add_row(
-                status_markup,
-                proj["name"],
-                svc_str,
-                config_file,
-                work_dir,
-                key=proj["name"],
-            )
+                services = proj.get("services", [])
+                running_cnt = sum(1 for s in services if s["status"] == "running")
+                svc_str = f"{running_cnt}/{len(services)}" if services else "0 (local file)"
+
+                config_file = proj.get("config_file") or "—"
+                work_dir = proj.get("working_dir") or "—"
+
+                row_data = (
+                    status_markup,
+                    proj["name"],
+                    svc_str,
+                    config_file,
+                    work_dir,
+                )
+                key = proj["name"]
+
+                if key in current_keys:
+                    for col_key, cell_val in zip(columns, row_data):
+                        table.update_cell(key, col_key, cell_val, update_width=True)
+                else:
+                    table.add_row(*row_data, key=key)
 
     def _get_selected_project(self) -> dict | None:
         table = self.query_one("#compose-table", DataTable)
@@ -184,6 +198,7 @@ class ComposeTab(Vertical):
 
     # ── Compose Actions ───────────────────────────────────────────────
 
+    @work(exclusive=True)
     async def action_compose_up(self) -> None:
         proj = self._get_selected_project()
         if not proj:
@@ -220,6 +235,7 @@ class ComposeTab(Vertical):
             on_confirm,
         )
 
+    @work(exclusive=True)
     async def _do_compose_down(self, proj: dict) -> None:
         self.notify(f"Stopping stack '{proj['name']}' (docker compose down)...", severity="information")
         try:
@@ -234,6 +250,7 @@ class ComposeTab(Vertical):
         except DockerClientError as e:
             self.notify(str(e), severity="error")
 
+    @work(exclusive=True)
     async def action_compose_start(self) -> None:
         proj = self._get_selected_project()
         if not proj:
@@ -247,6 +264,7 @@ class ComposeTab(Vertical):
         except DockerClientError as e:
             self.notify(str(e), severity="error")
 
+    @work(exclusive=True)
     async def action_compose_stop(self) -> None:
         proj = self._get_selected_project()
         if not proj:
@@ -260,6 +278,7 @@ class ComposeTab(Vertical):
         except DockerClientError as e:
             self.notify(str(e), severity="error")
 
+    @work(exclusive=True)
     async def action_compose_restart(self) -> None:
         proj = self._get_selected_project()
         if not proj:
@@ -273,6 +292,7 @@ class ComposeTab(Vertical):
         except DockerClientError as e:
             self.notify(str(e), severity="error")
 
+    @work(exclusive=True)
     async def action_compose_pull(self) -> None:
         proj = self._get_selected_project()
         if not proj:

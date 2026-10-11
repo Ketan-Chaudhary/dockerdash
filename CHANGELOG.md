@@ -8,25 +8,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [Unreleased]
-\n## [v0.1.4] - 2026-08-09
+
+### Fixed
+- Fixed duplicate row key collision error when rendering identical image tags in the `DataTable`.
+- Fixed down arrow key navigation on the tab bar to correctly enter the active tab's `DataTable`.
+- Fixed tab focus logic to prevent hidden `SearchBar` input fields from capturing cursor focus.
+- Fixed Compose tab so the `Escape` key closes the side panel and returns focus to the table.
+- Fixed `release.yml` GitHub Actions workflow to explicitly use `shell: bash` for extracting tags on Windows runners.
+
+### Changed
+- Removed hardcoded version number from the main application window title.
+- Updated `README.md` release instructions to use a generic `<version>` placeholder instead of a hardcoded tag.
+
+### Performance
+- Massively improved tab refreshing by implementing Textual `app.batch_update()` and `update_cell` diffing, preventing UI layout locking and screen flickering.
+- Prevented UI lag during tab switches by adding a `0.3s` non-blocking delay to allow the tab transition animation to finish smoothly before triggering data fetch.
+- Replaced synchronous API calls with Textual `@work(exclusive=True)` background workers across all tabs to prevent overlapping requests and keep the UI responsive.
+
+## [v0.1.4] - 2026-08-09
 
 ### Merged Feature
-- fix(ci): use gh pr create in create-release-pr workflow to eliminate … (#11 by @Ketan-Chaudhary)
+- fix(ci): use gh pr create in create-release-pr workflow to eliminate branch mismatch and node deprecation errors (#11 by @Ketan-Chaudhary)
 
-\n## [v0.1.3] - 2026-08-09
+## [v0.1.3] - 2026-08-09
 
 ### Merged Feature
-- fix(ci): trigger release workflow on tag push as well as merged relea… (#8 by @Ketan-Chaudhary)
+- fix(ci): trigger release workflow on tag push as well as merged release PRs (#8 by @Ketan-Chaudhary)
 
-\n## [v0.1.2] - 2026-08-09
+## [v0.1.2] - 2026-08-09
 
 ### Merged Feature
 - Feat/ci cd automation (#6 by @Ketan-Chaudhary)
 
-\n## [v0.1.1] - 2026-08-09
+## [v0.1.1] - 2026-08-09
 
 ### Merged Pull Request
-- ci: add PR CI matrix, automated SemVer release workflow, unit tests, … (#1 by @Ketan-Chaudhary)
+- ci: add PR CI matrix, automated SemVer release workflow, unit tests, and templates (#1 by @Ketan-Chaudhary)
 
 
 ### Added
@@ -38,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.1.0] - 2026-08-09
+## [v0.1.0] - 2026-08-09
 
 ### Added
 - Initial release of **DockDash** terminal Docker management dashboard.
