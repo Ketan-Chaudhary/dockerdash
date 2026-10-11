@@ -9,6 +9,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Center, Vertical
@@ -20,7 +21,6 @@ from textual.widgets import (
     TabPane,
 )
 
-from dockdash import __app_name__, __version__
 from dockdash.docker_client import DockerClient
 from dockdash.modals.help_dialog import HelpDialog
 from dockdash.screens.compose import ComposeTab
@@ -43,7 +43,7 @@ else:
 class DockerDashApp(App):
     """The main DockDash application."""
 
-    TITLE = f"{__app_name__} v{__version__}"
+    TITLE = "DockDash"
     SUB_TITLE = "Docker Dashboard"
     CSS_PATH = CSS_PATH
 
@@ -213,12 +213,17 @@ class DockerDashApp(App):
         self, event: TabbedContent.TabActivated
     ) -> None:
         """Refresh data when a tab is activated."""
-        self.call_later(self._refresh_active_tab)
+        self._refresh_active_tab()
 
+    @work(exclusive=True)
     async def _refresh_active_tab(self) -> None:
         """Refresh whichever tab is currently active."""
         if not self._connected:
             return
+
+        import asyncio
+        # Wait for the tab transition animation to finish to avoid lag/stutter
+        await asyncio.sleep(0.3)
         try:
             tabs = self.query_one("#main-tabs", TabbedContent)
             active = tabs.active

@@ -119,7 +119,8 @@ Standalone compiled executables requiring no Python installation are available u
 
 - **Linux (x86_64)**:
   ```bash
-  tar -xzvf dockdash-linux-x86_64-v0.1.3.tar.gz
+  # Replace <version> with the latest release version (e.g., v0.1.5)
+  tar -xzvf dockdash-linux-x86_64-<version>.tar.gz
   ./dockdash
   ```
 - **Windows**:

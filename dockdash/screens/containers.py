@@ -5,6 +5,7 @@ from __future__ import annotations
 import subprocess
 import sys
 
+from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
@@ -85,33 +86,50 @@ class ContainersTab(Vertical):
             self.notify(str(e), severity="error")
 
     def _update_table(self) -> None:
-        table = self.query_one("#container-table", DataTable)
-        table.clear()
+        with self.app.batch_update():
+            table = self.query_one("#container-table", DataTable)
 
-        for c in self._filtered:
-            status_text, status_class = DockerClient.format_status(c["status"])
-            # Use Rich markup for status coloring
-            status_colors = {
-                "status-running": "#3fb950",
-                "status-exited": "#f85149",
-                "status-paused": "#d29922",
-                "status-created": "#58a6ff",
-                "status-restarting": "#db6d28",
-                "status-removing": "#484f58",
-                "status-dead": "#f85149",
-                "status-unknown": "#8b949e",
-            }
-            color = status_colors.get(status_class, "#8b949e")
+            # Get existing row keys
+            current_keys = {row_key.value for row_key in table.rows.keys()}
+            new_keys = {c["full_id"] for c in self._filtered}
 
-            table.add_row(
-                f"[{color} bold]{status_text}[/]",
-                c["name"],
-                c["image"],
-                c["state"],
-                c["ports"],
-                c["id"],
-                key=c["full_id"],
-            )
+            # Remove old rows that are no longer in the filtered list
+            for key in current_keys - new_keys:
+                table.remove_row(key)
+
+            columns = list(table.columns.keys())
+
+            for c in self._filtered:
+                status_text, status_class = DockerClient.format_status(c["status"])
+                status_colors = {
+                    "status-running": "#3fb950",
+                    "status-exited": "#f85149",
+                    "status-paused": "#d29922",
+                    "status-created": "#58a6ff",
+                    "status-restarting": "#db6d28",
+                    "status-removing": "#484f58",
+                    "status-dead": "#f85149",
+                    "status-unknown": "#8b949e",
+                }
+                color = status_colors.get(status_class, "#8b949e")
+
+                row_data = (
+                    f"[{color} bold]{status_text}[/]",
+                    c["name"],
+                    c["image"],
+                    c["state"],
+                    c["ports"],
+                    c["id"],
+                )
+                key = c["full_id"]
+
+                if key in current_keys:
+                    # Update cells if row exists
+                    for col_key, cell_val in zip(columns, row_data):
+                        table.update_cell(key, col_key, cell_val, update_width=True)
+                else:
+                    # Add new row
+                    table.add_row(*row_data, key=key)
 
     def _get_selected_container(self) -> dict | None:
         """Get the currently selected container dict."""
@@ -174,6 +192,7 @@ class ContainersTab(Vertical):
 
     # ── Container Actions ─────────────────────────────────────────────
 
+    @work(exclusive=True)
     async def action_start_container(self) -> None:
         cid = self._get_selected_id()
         if not cid:
@@ -185,6 +204,7 @@ class ContainersTab(Vertical):
         except DockerClientError as e:
             self.notify(str(e), severity="error")
 
+    @work(exclusive=True)
     async def action_stop_container(self) -> None:
         cid = self._get_selected_id()
         if not cid:
@@ -196,6 +216,7 @@ class ContainersTab(Vertical):
         except DockerClientError as e:
             self.notify(str(e), severity="error")
 
+    @work(exclusive=True)
     async def action_restart_container(self) -> None:
         cid = self._get_selected_id()
         if not cid:
@@ -207,6 +228,7 @@ class ContainersTab(Vertical):
         except DockerClientError as e:
             self.notify(str(e), severity="error")
 
+    @work(exclusive=True)
     async def action_pause_container(self) -> None:
         cid = self._get_selected_id()
         if not cid:
@@ -374,6 +396,7 @@ class ContainersTab(Vertical):
             container = self._filtered[idx]
             self._show_detail(container)
 
+    @work(exclusive=True)
     async def _show_detail(self, container: dict) -> None:
         """Show the detail panel for a container."""
         try:
