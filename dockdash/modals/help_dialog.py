@@ -71,6 +71,17 @@ SYSTEM_SHORTCUTS = [
     ("x", "Full system prune"),
 ]
 
+LOG_VIEWER_SHORTCUTS = [
+    ("Esc / q", "Close log viewer / clear filter"),
+    ("f", "Toggle live follow stream (tail -f)"),
+    ("a", "Toggle auto-scroll to bottom"),
+    ("/", "Open search & live filter input"),
+    ("t", "Toggle timestamp display"),
+    ("w", "Toggle line wrapping"),
+    ("c", "Clear displayed logs"),
+    ("s", "Export logs to local file"),
+]
+
 
 def _render_section(title: str, shortcuts: list[tuple[str, str]]) -> str:
     """Render a section of shortcuts as Rich markup."""
@@ -100,6 +111,8 @@ class HelpDialog(ModalScreen[None]):
                 yield Static(_render_section("GLOBAL", GLOBAL_SHORTCUTS))
                 yield Static("")
                 yield Static(_render_section("CONTAINERS", CONTAINER_SHORTCUTS))
+                yield Static("")
+                yield Static(_render_section("LOG VIEWER", LOG_VIEWER_SHORTCUTS))
                 yield Static("")
                 yield Static(_render_section("IMAGES", IMAGE_SHORTCUTS))
                 yield Static("")

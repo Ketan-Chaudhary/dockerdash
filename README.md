@@ -14,7 +14,7 @@ A powerful, keyboard-driven Docker management dashboard built for the terminal.
 
 - **Containers Management**: Start, stop, restart, pause, rename, and force-remove containers.
 - **Live Container Stats**: Real-time monitoring of CPU%, memory usage, network I/O, disk I/O, and PID metrics.
-- **Full-Screen Log Viewer**: Fast log viewer with text scrolling, clean ANSI markup handling, and one-key log clearing.
+- **Live Streaming Log Viewer**: Real-time log streaming (`tail -f`) for containers and compose stacks with live search & filtering (`/`), match highlighting, auto-scroll toggle (`a`), timestamp toggle (`t`), line wrapping (`w`), and export (`s`).
 - **Interactive Shell Access**: Attach directly to running containers (`t`) via interactive terminal execution.
 - **Images Management**: Pull, delete, tag/rename, and inspect local images with layer history view.
 - **Dockerfile Editor**: Built-in full-screen editor with line numbers, file editing, saving, and direct image building.
@@ -171,6 +171,21 @@ Standalone compiled executables requiring no Python installation are available u
 | `i` | Open full-screen JSON Inspect view |
 | `t` | Attach terminal (interactive shell execution) |
 | `Enter` | Toggle Container Detail side panel |
+
+---
+
+### Log Viewer Modal (`l`)
+
+| Shortcut | Action |
+| :--- | :--- |
+| `Esc` / `q` | Close log viewer / dismiss active search filter |
+| `f` | Toggle real-time live follow streaming (`tail -f`) |
+| `a` | Toggle automatic scrolling to newest lines |
+| `/` | Open live search & regex filter bar |
+| `t` | Toggle timestamp prefix visibility |
+| `w` | Toggle line wrapping on / off |
+| `c` | Clear log buffer and screen |
+| `s` | Export all buffered logs to local text file |
 
 ---
 

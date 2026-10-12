@@ -182,6 +182,20 @@ class DockerClient:
             return logs.decode("utf-8", errors="replace")
         return logs or ""
 
+    def stream_container_logs(
+        self, container_id: str, tail: int = 200, timestamps: bool = True
+    ):
+        """Return a synchronous generator streaming container log output chunks."""
+        container = self.client.containers.get(container_id)
+        return container.logs(
+            stdout=True,
+            stderr=True,
+            tail=tail,
+            timestamps=timestamps,
+            stream=True,
+            follow=True,
+        )
+
     @_handle_errors
     async def container_stats(self, container_id: str) -> dict:
         """Get a single stats snapshot for a container."""
@@ -627,6 +641,40 @@ class DockerClient:
         stdout, stderr = await process.communicate()
         output = stdout.decode("utf-8", errors="replace") + "\n" + stderr.decode("utf-8", errors="replace")
         return output.strip()
+
+    async def stream_compose_logs(
+        self, project_name: str, config_file: str = "", working_dir: str = "", tail: int = 200
+    ) -> asyncio.subprocess.Process:
+        """Spawn a subprocess streaming compose logs."""
+        import os
+        import shutil
+
+        docker_bin = shutil.which("docker")
+        compose_bin = shutil.which("docker-compose")
+
+        cmd = []
+        if docker_bin:
+            cmd = [docker_bin, "compose"]
+        elif compose_bin:
+            cmd = [compose_bin]
+        else:
+            raise DockerClientError("Neither 'docker compose' nor 'docker-compose' CLI found on host system.")
+
+        if config_file and os.path.isfile(config_file):
+            cmd.extend(["-f", config_file])
+        elif project_name:
+            cmd.extend(["-p", project_name])
+
+        cmd.extend(["logs", "-f", "--tail", str(tail), "--timestamps"])
+
+        cwd = working_dir if (working_dir and os.path.isdir(working_dir)) else None
+
+        return await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+            cwd=cwd,
+        )
 
     # ── Utility ───────────────────────────────────────────────────────
 

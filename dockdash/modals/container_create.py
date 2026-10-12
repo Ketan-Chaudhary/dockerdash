@@ -41,7 +41,6 @@ class ContainerCreateDialog(ModalScreen[dict | None]):
         background: #0d1117;
     }
     ContainerCreateDialog .form-header {
-        dock: top;
         height: 1;
         background: #161b22;
         color: #79c0ff;
@@ -85,13 +84,16 @@ class ContainerCreateDialog(ModalScreen[dict | None]):
         padding: 0;
     }
     ContainerCreateDialog .form-footer {
-        dock: bottom;
-        height: 3;
+        height: auto;
+        min-height: 3;
         background: #161b22;
         padding: 0 2;
         border-top: solid #30363d;
         layout: horizontal;
         align: right middle;
+    }
+    ContainerCreateDialog .form-footer Button {
+        margin: 0 1;
     }
     """
 

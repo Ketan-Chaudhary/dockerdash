@@ -305,23 +305,18 @@ class ContainersTab(Vertical):
 
     # ── View Actions ──────────────────────────────────────────────────
 
-    async def action_view_logs(self) -> None:
-        """Open logs in a full-screen modal."""
+    def action_view_logs(self) -> None:
+        """Open logs in a full-screen live streaming modal."""
         container = self._get_selected_container()
         if not container:
             return
-        try:
-            logs = await self._docker.container_logs(
-                container["full_id"], tail=500, timestamps=True
+        self.app.push_screen(
+            LogViewerScreen(
+                title=f"LOGS — {container['name']}",
+                container_id=container["full_id"],
+                docker_client=self._docker,
             )
-            self.app.push_screen(
-                LogViewerScreen(
-                    title=f"LOGS — {container['name']}",
-                    content=logs,
-                )
-            )
-        except DockerClientError as e:
-            self.notify(str(e), severity="error")
+        )
 
     async def action_inspect_container(self) -> None:
         cid = self._get_selected_id()

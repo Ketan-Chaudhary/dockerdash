@@ -9,7 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Real-time live log streaming (`tail -f`) for containers and Docker Compose stacks in `LogViewerScreen` via dedicated background threads and async workers.
+- Interactive log search and live regex/text filter bar (`/`) with instant match highlighting and match counting (`X/Y lines`).
+- Auto-scroll to bottom toggle (`a`) with live stream tracking.
+- Timestamp display toggle (`t`) with ISO 8601 prefix detection and dim formatting.
+- Text line wrap toggle (`w`) and log display clear (`c`).
+- Log export action (`s`) saving buffered output directly to a timestamped local file.
+- `stream_container_logs` and `stream_compose_logs` methods in `DockerClient`.
+
 ### Fixed
+- Fixed bottom-bar overflow and clipping across full-screen modals (`ContainerCreateDialog`, `DockerfileEditorDialog`, `InspectDialog`, `LogViewerScreen`) by replacing conflicting `dock` layouts with flex containers.
 - Fixed duplicate row key collision error when rendering identical image tags in the `DataTable`.
 - Fixed down arrow key navigation on the tab bar to correctly enter the active tab's `DataTable`.
 - Fixed tab focus logic to prevent hidden `SearchBar` input fields from capturing cursor focus.
