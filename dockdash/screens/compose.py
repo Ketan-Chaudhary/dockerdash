@@ -307,22 +307,22 @@ class ComposeTab(Vertical):
         except DockerClientError as e:
             self.notify(str(e), severity="error")
 
-    async def action_compose_logs(self) -> None:
+    def action_compose_logs(self) -> None:
         proj = self._get_selected_project()
         if not proj:
             return
-        try:
-            logs = await self._docker.get_compose_logs(
-                proj["name"], proj.get("config_file", ""), proj.get("working_dir", ""), tail=500
+        self.app.push_screen(
+            LogViewerScreen(
+                title=f"COMPOSE LOGS — {proj['name']}",
+                docker_client=self._docker,
+                is_compose=True,
+                compose_params={
+                    "name": proj["name"],
+                    "config_file": proj.get("config_file", ""),
+                    "working_dir": proj.get("working_dir", ""),
+                },
             )
-            self.app.push_screen(
-                LogViewerScreen(
-                    title=f"COMPOSE LOGS — {proj['name']}",
-                    content=logs,
-                )
-            )
-        except DockerClientError as e:
-            self.notify(str(e), severity="error")
+        )
 
     async def action_edit_compose_file(self) -> None:
         proj = self._get_selected_project()

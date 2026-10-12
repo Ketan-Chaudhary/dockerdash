@@ -65,7 +65,6 @@ class DockerfileEditorDialog(ModalScreen[dict | None]):
         padding: 0;
     }
     DockerfileEditorDialog .editor-header {
-        dock: top;
         height: 1;
         background: #161b22;
         color: #79c0ff;
@@ -74,7 +73,6 @@ class DockerfileEditorDialog(ModalScreen[dict | None]):
         border-bottom: solid #30363d;
     }
     DockerfileEditorDialog .editor-top-bar {
-        dock: top;
         height: 3;
         background: #161b22;
         padding: 0 1;
@@ -88,9 +86,13 @@ class DockerfileEditorDialog(ModalScreen[dict | None]):
     DockerfileEditorDialog .editor-top-bar Input {
         width: 1fr;
     }
+    DockerfileEditorDialog TextArea {
+        height: 1fr;
+        width: 100%;
+    }
     DockerfileEditorDialog .editor-bottom-bar {
-        dock: bottom;
-        height: 3;
+        height: auto;
+        min-height: 3;
         background: #161b22;
         padding: 0 1;
         border-top: solid #30363d;
@@ -106,10 +108,6 @@ class DockerfileEditorDialog(ModalScreen[dict | None]):
     }
     DockerfileEditorDialog .editor-bottom-bar Button {
         margin: 0 0 0 1;
-    }
-    DockerfileEditorDialog TextArea {
-        height: 1fr;
-        width: 100%;
     }
     """
 

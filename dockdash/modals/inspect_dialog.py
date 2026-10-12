@@ -30,7 +30,6 @@ class InspectDialog(ModalScreen[None]):
         border: solid #30363d;
     }
     InspectDialog .inspect-header {
-        dock: top;
         height: 1;
         background: #161b22;
         color: #79c0ff;
