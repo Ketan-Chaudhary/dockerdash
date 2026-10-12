@@ -85,6 +85,25 @@ class NetworksTab(Vertical):
         table = self.query_one("#network-table", DataTable)
         if table.row_count == 0:
             return None
+        selected_id = None
+        try:
+            row_key, _ = table.coordinate_to_cell_key(table.cursor_coordinate)
+            selected_id = row_key.value
+        except Exception:
+            try:
+                if 0 <= table.cursor_row < len(table.ordered_rows):
+                    selected_id = table.ordered_rows[table.cursor_row].key.value
+            except Exception:
+                pass
+
+        if selected_id:
+            for n in self._filtered:
+                if n["full_id"] == selected_id:
+                    return n
+            for n in self._networks:
+                if n["full_id"] == selected_id:
+                    return n
+
         cursor_row = table.cursor_row
         if cursor_row < len(self._filtered):
             return self._filtered[cursor_row]

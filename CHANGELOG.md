@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `stream_container_logs` and `stream_compose_logs` methods in `DockerClient`.
 
 ### Fixed
+- Fixed critical item selection desync across `DataTable` views (`ContainersTab`, `ImagesTab`, `VolumesTab`, `NetworksTab`, `ComposeTab`) where table actions (start, stop, logs, inspect, etc.) could target the wrong or previous container when Docker reordered lists or diffed rows; selection now securely resolves via the visual cursor's `RowKey`.
 - Fixed bottom-bar overflow and clipping across full-screen modals (`ContainerCreateDialog`, `DockerfileEditorDialog`, `InspectDialog`, `LogViewerScreen`) by replacing conflicting `dock` layouts with flex containers.
 - Fixed duplicate row key collision error when rendering identical image tags in the `DataTable`.
 - Fixed down arrow key navigation on the tab bar to correctly enter the active tab's `DataTable`.

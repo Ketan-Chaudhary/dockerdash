@@ -120,6 +120,25 @@ class ComposeTab(Vertical):
         table = self.query_one("#compose-table", DataTable)
         if table.row_count == 0:
             return None
+        selected_name = None
+        try:
+            row_key, _ = table.coordinate_to_cell_key(table.cursor_coordinate)
+            selected_name = row_key.value
+        except Exception:
+            try:
+                if 0 <= table.cursor_row < len(table.ordered_rows):
+                    selected_name = table.ordered_rows[table.cursor_row].key.value
+            except Exception:
+                pass
+
+        if selected_name:
+            for proj in self._filtered:
+                if proj["name"] == selected_name:
+                    return proj
+            for proj in self._projects:
+                if proj["name"] == selected_name:
+                    return proj
+
         cursor_row = table.cursor_row
         if cursor_row < len(self._filtered):
             return self._filtered[cursor_row]

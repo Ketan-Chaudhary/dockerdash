@@ -97,6 +97,25 @@ class ImagesTab(Vertical):
         table = self.query_one("#image-table", DataTable)
         if table.row_count == 0:
             return None
+        selected_key = None
+        try:
+            row_key, _ = table.coordinate_to_cell_key(table.cursor_coordinate)
+            selected_key = row_key.value
+        except Exception:
+            try:
+                if 0 <= table.cursor_row < len(table.ordered_rows):
+                    selected_key = table.ordered_rows[table.cursor_row].key.value
+            except Exception:
+                pass
+
+        if selected_key:
+            for img in self._filtered:
+                if f"{img['full_id']}:{img['repository']}:{img['tag']}" == selected_key:
+                    return img
+            for img in self._images:
+                if f"{img['full_id']}:{img['repository']}:{img['tag']}" == selected_key:
+                    return img
+
         cursor_row = table.cursor_row
         if cursor_row < len(self._filtered):
             return self._filtered[cursor_row]

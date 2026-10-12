@@ -136,6 +136,25 @@ class ContainersTab(Vertical):
         table = self.query_one("#container-table", DataTable)
         if table.row_count == 0:
             return None
+        selected_id = None
+        try:
+            row_key, _ = table.coordinate_to_cell_key(table.cursor_coordinate)
+            selected_id = row_key.value
+        except Exception:
+            try:
+                if 0 <= table.cursor_row < len(table.ordered_rows):
+                    selected_id = table.ordered_rows[table.cursor_row].key.value
+            except Exception:
+                pass
+
+        if selected_id:
+            for c in self._filtered:
+                if c["full_id"] == selected_id:
+                    return c
+            for c in self._containers:
+                if c["full_id"] == selected_id:
+                    return c
+
         cursor_row = table.cursor_row
         if cursor_row < len(self._filtered):
             return self._filtered[cursor_row]
@@ -386,9 +405,21 @@ class ContainersTab(Vertical):
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         """Show detail panel when a row is selected (Enter)."""
-        idx = event.cursor_row
-        if idx < len(self._filtered):
-            container = self._filtered[idx]
+        selected_id = event.row_key.value if event.row_key else None
+        container = None
+        if selected_id:
+            for c in self._filtered:
+                if c["full_id"] == selected_id:
+                    container = c
+                    break
+            if not container:
+                for c in self._containers:
+                    if c["full_id"] == selected_id:
+                        container = c
+                        break
+        if not container:
+            container = self._get_selected_container()
+        if container:
             self._show_detail(container)
 
     @work(exclusive=True)
