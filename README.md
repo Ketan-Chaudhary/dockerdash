@@ -1,292 +1,405 @@
-# DockDash
+<h1 align="center">DockDash</h1>
 
-A powerful, keyboard-driven Docker management dashboard built for the terminal.
+<p align="center">
+  <strong>A powerful, keyboard-driven Docker management dashboard for the terminal.</strong>
+</p>
 
----
+<p align="center">
+  <a href="https://github.com/Ketan-Chaudhary/dockerdash/releases"><img src="https://img.shields.io/github/v/release/Ketan-Chaudhary/dockerdash?style=flat-square&color=blue" alt="Latest Release"></a>
+  <a href="https://github.com/Ketan-Chaudhary/dockerdash/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Ketan-Chaudhary/dockerdash/ci.yml?branch=main&style=flat-square&label=CI" alt="CI Status"></a>
+  <a href="https://github.com/Ketan-Chaudhary/dockerdash/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Ketan-Chaudhary/dockerdash?style=flat-square&color=green" alt="License"></a>
+  <a href="https://github.com/Ketan-Chaudhary/dockerdash/stargazers"><img src="https://img.shields.io/github/stars/Ketan-Chaudhary/dockerdash?style=flat-square&color=yellow" alt="GitHub Stars"></a>
+  <a href="https://github.com/Ketan-Chaudhary/dockerdash/issues"><img src="https://img.shields.io/github/issues/Ketan-Chaudhary/dockerdash?style=flat-square" alt="Issues"></a>
+</p>
 
-## Overview
-
-**DockDash** provides a modern, high-contrast Terminal User Interface (TUI) for inspecting, managing, and controlling Docker Engine resources. Built using Python, Textual, and the official Docker SDK, DockDash delivers desktop-grade interactivity directly within your terminal window.
-
----
-
-## Key Features
-
-- **Containers Management**: Start, stop, restart, pause, rename, and force-remove containers.
-- **Live Container Stats**: Real-time monitoring of CPU%, memory usage, network I/O, disk I/O, and PID metrics.
-- **Live Streaming Log Viewer**: Real-time log streaming (`tail -f`) for containers and compose stacks with live search & filtering (`/`), match highlighting, auto-scroll toggle (`a`), timestamp toggle (`t`), line wrapping (`w`), and export (`s`).
-- **Interactive Shell Access**: Attach directly to running containers (`t`) via interactive terminal execution.
-- **Images Management**: Pull, delete, tag/rename, and inspect local images with layer history view.
-- **Dockerfile Editor**: Built-in full-screen editor with line numbers, file editing, saving, and direct image building.
-- **Container Creation Wizard**: Responsive 2-column full-screen form for configuring ports, volumes, environment variables, restart policies, and resource limits.
-- **Volumes & Networks**: Inspect, create, and remove Docker volumes and networks with built-in protection for core networks.
-- **Docker Compose Stacks**: Manage multi-container stacks automatically grouped by project labels or local `docker-compose.yml` files. Supports `up`, `down`, `start`, `stop`, `restart`, `pull`, combined stack logs, and full-screen compose file editing.
-- **System Overview & Disk Cleanup**: Real-time Engine attributes, disk usage breakdown, and non-blocking prune tools for containers, images, volumes, networks, or full system prune.
-- **Keyboard-Driven Traversal**: Smooth focus traversal across interactive controls using Arrow keys (`left`, `right`, `up`, `down`), `Tab`, and context keybindings (`1` to `6`).
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#screenshots">Screenshots</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#keyboard-shortcuts">Shortcuts</a> •
+  <a href="#architecture">Architecture</a> •
+  <a href="#contributing">Contributing</a> •
+  <a href="#license">License</a>
+</p>
 
 ---
 
-## Interface Showcase
+## Why DockDash?
 
-### Containers Management (`1`)
-Inspect running and stopped containers with live status labels, search filtering, detailed attribute panels, and real-time resource stats.
-
-![Containers Tab](docs/screenshots/containers_tab.png)
-
----
-
-### Image Management (`2`)
-View local images, layer histories, inspect configurations, and launch the full-screen Dockerfile editor or container creation wizard.
-
-![Images Tab](docs/screenshots/images_tab.png)
-
----
-
-### Volumes Management (`3`)
-List persistent storage volumes, inspect volume driver attributes, and perform safe creation or deletion.
-
-![Volumes Tab](docs/screenshots/volumes_tab.png)
-
----
-
-### Networks Management (`4`)
-Manage Docker networks (bridge, host, overlay, custom) with built-in protection against accidental deletion of system networks.
-
-![Networks Tab](docs/screenshots/networks_tab.png)
-
----
-
-### Docker Compose Stacks (`5`)
-Control multi-container compose projects automatically grouped by project labels or local `docker-compose.yml` configuration files.
-
-![Compose Tab](docs/screenshots/compose_tab.png)
-
----
-
-### System Overview & Cleanup (`6`)
-Monitor Docker Engine attributes, memory/disk usage breakdown, and trigger single-key or arrow-traversable system prune actions.
-
-![System Tab](docs/screenshots/system_tab.png)
-
----
-
-### Full-Screen Container Creation Wizard
-Responsive 2-column full-screen form for configuring container images, ports, volumes, environment variables, restart policies, and CPU/memory resource limits.
-
-![Container Create Wizard](docs/screenshots/container_create.png)
-
----
-
-### Keyboard Shortcuts Reference Modal
-Press `?` or `F1` at any time to open the full interactive keybindings reference card.
-
-![Help Modal](docs/screenshots/help_dialog.png)
-
----
-
-## Quick Start & Installation
-
-### System Requirements
-- Operating System: Linux (Ubuntu, Debian, Arch Linux, Fedora), macOS, or Windows
-- Python `>= 3.10`
-- Docker Engine running locally (or Docker Desktop)
-
----
-
-### Installation Methods
-
-#### Option A: Running from Source / PyPI
+Managing Docker through `docker ps`, `docker logs`, and `docker inspect` gets tedious fast. DockDash brings the power of desktop Docker tools into your terminal — with zero browser dependencies, instant keyboard navigation, and a high-contrast UI built on [Textual](https://textual.textualize.io/).
 
 ```bash
-# Clone repository
+git clone https://github.com/Ketan-Chaudhary/dockerdash.git
+cd dockerdash && pip install -e . && dockdash
+```
+
+---
+
+## Features
+
+### Container Management
+- **Full lifecycle control** — Start, stop, restart, pause/unpause, rename, and force-remove containers
+- **Real-time stats** — Live CPU%, memory, network I/O, disk I/O, and PID count bars
+- **Streaming log viewer** — Real-time `tail -f` with live search (`/`), match highlighting, auto-scroll (`a`), timestamps (`t`), line wrap (`w`), and export to file (`s`)
+- **Interactive shell** — Attach directly to running containers via `docker exec -it`
+
+### Image Management
+- **Pull, delete, tag/rename, and inspect** images with full JSON detail
+- **Layer history viewer** — Explore image build layers and sizes
+- **Dockerfile editor** — Built-in full-screen editor with line numbers and direct `docker build`
+- **Container creation wizard** — Responsive 2-column form for ports (host:container and ip:host:container), volumes, environment variables, restart policies, and resource limits
+
+### Volumes & Networks
+- **Create, inspect, and remove** Docker volumes and networks
+- **Built-in protection** against accidental deletion of system networks (`bridge`, `host`, `none`)
+
+### Docker Compose Stacks
+- **Auto-discovery** — Stacks grouped automatically by project labels or local `docker-compose.yml` files
+- **Full lifecycle** — `up`, `down`, `start`, `stop`, `restart`, `pull`
+- **Combined log streaming** — View aggregated logs for entire stacks
+- **Compose file editor** — Edit `docker-compose.yml` files directly in the TUI
+
+### System & Cleanup
+- **Engine overview** — Real-time Docker Engine attributes, version info, and disk usage breakdown
+- **Granular pruning** — Prune stopped containers, dangling images, unused volumes, unused networks, or trigger a full system prune
+
+### General
+- **Keyboard-first** — Every action is one or two keystrokes away
+- **Live search & filtering** — Press `/` on any tab to instantly filter results
+- **High-contrast dark theme** — Glowing focus highlights, status badges, and smooth tab transitions
+- **Cross-platform** — Linux, macOS, and Windows (standalone binaries available)
+
+---
+
+## Screenshots
+
+<details>
+<summary><strong>Containers Tab</strong> — Full lifecycle control with live stats and log streaming</summary>
+<br>
+<img src="docs/screenshots/containers_tab.png" alt="Containers Tab" width="800">
+</details>
+
+<details>
+<summary><strong>Images Tab</strong> — Pull, inspect, build, and launch containers from images</summary>
+<br>
+<img src="docs/screenshots/images_tab.png" alt="Images Tab" width="800">
+</details>
+
+<details>
+<summary><strong>Volumes Tab</strong> — Manage persistent storage volumes</summary>
+<br>
+<img src="docs/screenshots/volumes_tab.png" alt="Volumes Tab" width="800">
+</details>
+
+<details>
+<summary><strong>Networks Tab</strong> — Docker network management with system protection</summary>
+<br>
+<img src="docs/screenshots/networks_tab.png" alt="Networks Tab" width="800">
+</details>
+
+<details>
+<summary><strong>Compose Stacks</strong> — Multi-container project management</summary>
+<br>
+<img src="docs/screenshots/compose_tab.png" alt="Compose Tab" width="800">
+</details>
+
+<details>
+<summary><strong>System Overview</strong> — Engine info, disk usage, and prune tools</summary>
+<br>
+<img src="docs/screenshots/system_tab.png" alt="System Tab" width="800">
+</details>
+
+<details>
+<summary><strong>Container Creation Wizard</strong> — Full-screen responsive form</summary>
+<br>
+<img src="docs/screenshots/container_create.png" alt="Container Create Wizard" width="800">
+</details>
+
+<details>
+<summary><strong>Keyboard Shortcuts Modal</strong> — Press <code>?</code> for the full reference</summary>
+<br>
+<img src="docs/screenshots/help_dialog.png" alt="Help Dialog" width="800">
+</details>
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+| Requirement | Minimum Version |
+| :--- | :--- |
+| Python | `>= 3.10` |
+| Docker Engine | Running locally or via Docker Desktop |
+| OS | Linux, macOS, or Windows |
+
+### Install from Source
+
+```bash
+# Clone the repository
 git clone https://github.com/Ketan-Chaudhary/dockerdash.git
 cd dockerdash
 
-# Create virtual environment
+# Create and activate a virtual environment
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+source .venv/bin/activate    # Windows: .venv\Scripts\activate
 
-# Install dependencies and package
+# Install in editable mode
 pip install -e .
 
-# Launch DockDash
+# Launch
 dockdash
 ```
 
-#### Option B: Standalone Binary (Linux / macOS / Windows)
+### Standalone Binaries
 
-Standalone compiled executables requiring no Python installation are available under [GitHub Releases](https://github.com/Ketan-Chaudhary/dockerdash/releases):
+Pre-built executables requiring **no Python installation** are available on the [Releases](https://github.com/Ketan-Chaudhary/dockerdash/releases) page:
 
-- **Linux (x86_64)**:
-  ```bash
-  # Replace <version> with the latest release version (e.g., v0.1.5)
-  tar -xzvf dockdash-linux-x86_64-<version>.tar.gz
-  ./dockdash
-  ```
-- **Windows**:
-  Download `dockdash.exe` and run from PowerShell or Command Prompt:
-  ```cmd
-  .\dockdash.exe
-  ```
-- **Arch Linux**:
-  Download source tarball or build via `PKGBUILD`:
-  ```bash
-  makepkg -si
-  ```
+| Platform | Instructions |
+| :--- | :--- |
+| **Linux (x86_64)** | `tar -xzvf dockdash-linux-x86_64-<version>.tar.gz && ./dockdash` |
+| **Windows** | Download `dockdash.exe` → run from PowerShell: `.\\dockdash.exe` |
+| **Arch Linux** | Build via included `PKGBUILD`: `makepkg -si` |
 
 ---
 
-## Keyboard Shortcuts Reference
+## Keyboard Shortcuts
 
-### Global Controls
+DockDash is fully operable via keyboard. Press `?` or `F1` at any time for the complete reference.
 
-| Shortcut | Action |
-| :--- | :--- |
-| `1` | Switch to Containers tab |
-| `2` | Switch to Images tab |
-| `3` | Switch to Volumes tab |
-| `4` | Switch to Networks tab |
-| `5` | Switch to Compose Stacks tab |
-| `6` | Switch to System & Cleanup tab |
-| `r` / `F5` | Refresh current tab data |
-| `/` | Open search / filter bar |
-| `?` / `F1` | Open Keyboard Shortcuts help modal |
-| `q` / `Ctrl+C` | Quit application |
-| `Esc` | Close active dialog, filter bar, or modal |
+### Global
 
----
+| Key | Action |
+| :---: | :--- |
+| `1` – `6` | Switch tabs (Containers / Images / Volumes / Networks / Compose / System) |
+| `r` / `F5` | Refresh current tab |
+| `/` | Open search & filter bar |
+| `?` / `F1` | Open keyboard shortcuts help |
+| `q` / `Ctrl+C` | Quit |
+| `Esc` | Close active dialog, filter, or modal |
 
-### Containers Tab (`1`)
+### Containers (`1`)
 
-| Shortcut | Action |
-| :--- | :--- |
-| `s` | Start container |
-| `S` | Stop container |
-| `R` | Restart container |
-| `p` | Pause / Unpause container |
-| `n` | Rename container |
-| `d` | Delete container (requires confirmation) |
-| `l` | Open full-screen Log Viewer (`Esc`/`q` to close, `c` to clear) |
-| `a` | Toggle real-time container Stats panel |
-| `i` | Open full-screen JSON Inspect view |
-| `t` | Attach terminal (interactive shell execution) |
-| `Enter` | Toggle Container Detail side panel |
+| Key | Action |
+| :---: | :--- |
+| `s` | Start |
+| `S` | Stop |
+| `R` | Restart |
+| `p` | Pause / Unpause |
+| `n` | Rename |
+| `d` | Delete (with confirmation) |
+| `l` | Open log viewer |
+| `a` | Toggle live stats panel |
+| `i` | JSON inspect |
+| `t` | Attach interactive shell |
+| `Enter` | Toggle detail side panel |
 
----
+### Log Viewer (`l`)
 
-### Log Viewer Modal (`l`)
+| Key | Action |
+| :---: | :--- |
+| `f` | Toggle live follow (`tail -f`) |
+| `a` | Toggle auto-scroll |
+| `/` | Live search & regex filter |
+| `t` | Toggle timestamps |
+| `w` | Toggle line wrap |
+| `c` | Clear log buffer |
+| `s` | Export logs to file |
+| `Esc` / `q` | Close |
 
-| Shortcut | Action |
-| :--- | :--- |
-| `Esc` / `q` | Close log viewer / dismiss active search filter |
-| `f` | Toggle real-time live follow streaming (`tail -f`) |
-| `a` | Toggle automatic scrolling to newest lines |
-| `/` | Open live search & regex filter bar |
-| `t` | Toggle timestamp prefix visibility |
-| `w` | Toggle line wrapping on / off |
-| `c` | Clear log buffer and screen |
-| `s` | Export all buffered logs to local text file |
+### Images (`2`)
 
----
+| Key | Action |
+| :---: | :--- |
+| `p` | Pull image |
+| `t` | Tag / rename |
+| `c` | Create container from image |
+| `e` | Open Dockerfile editor |
+| `h` | View layer history |
+| `i` | JSON inspect |
+| `d` | Delete image |
 
-### Images Tab (`2`)
+### Volumes (`3`) & Networks (`4`)
 
-| Shortcut | Action |
-| :--- | :--- |
-| `p` | Pull new image (`repository:tag`) |
-| `t` | Tag / rename image |
-| `c` | Launch Container Creation Wizard for selected image |
-| `e` | Open full-screen Dockerfile Editor (`Ctrl+S` to save, build button) |
-| `h` | View image layer history |
-| `i` | Open full-screen JSON Inspect view |
-| `d` | Delete image (requires confirmation) |
+| Key | Action |
+| :---: | :--- |
+| `c` | Create new |
+| `i` | Inspect details |
+| `d` | Remove (protected for system networks) |
 
----
+### Compose Stacks (`5`)
 
-### Volumes (`3`) & Networks (`4`) Tabs
+| Key | Action |
+| :---: | :--- |
+| `u` | `docker compose up -d` |
+| `d` | `docker compose down` |
+| `s` / `S` | Start / Stop |
+| `R` | Restart |
+| `p` | Pull images |
+| `l` | View combined stack logs |
+| `e` | Edit compose file |
 
-| Shortcut | Action |
-| :--- | :--- |
-| `c` | Create new volume or network |
-| `i` | Inspect volume or network details |
-| `d` | Remove volume or network (protected for system networks) |
+### System & Cleanup (`6`)
 
----
-
-### Compose Stacks Tab (`5`)
-
-| Shortcut | Action |
-| :--- | :--- |
-| `u` | Run `docker compose up -d` for selected stack |
-| `d` | Run `docker compose down` for selected stack |
-| `s` | Start stack containers (`docker compose start`) |
-| `S` | Stop stack containers (`docker compose stop`) |
-| `R` | Restart stack containers (`docker compose restart`) |
-| `p` | Pull stack images (`docker compose pull`) |
-| `l` | Open combined full-screen logs for stack |
-| `e` | Edit `docker-compose.yml` in full-screen editor |
-
----
-
-### System & Cleanup Tab (`6`)
-
-| Shortcut | Action |
-| :--- | :--- |
-| `left` `right` `up` `down` | Traverse cleanup action buttons |
-| `Enter` | Trigger selected prune action |
+| Key | Action |
+| :---: | :--- |
 | `c` | Prune stopped containers |
 | `i` | Prune dangling images |
 | `v` | Prune unused volumes |
 | `n` | Prune unused networks |
-| `x` | Trigger Full System Prune |
+| `x` | Full system prune |
+| `Arrow keys` | Traverse prune buttons |
 
 ---
 
-## Project Architecture
+## Architecture
 
 ```
 dockerdash/
-├── pyproject.toml               # Package configuration & dependencies
-├── LICENSE                      # MIT License
-├── README.md                    # Project documentation
+├── pyproject.toml                 # Package config, dependencies, scripts
+├── LICENSE                        # MIT License
+├── README.md                      # This file
+├── CHANGELOG.md                   # Release history
+│
+├── .github/
+│   ├── workflows/
+│   │   ├── ci.yml                 # PR checks: lint → test → build (matrix)
+│   │   └── release.yml            # Automated release on tag push
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.md
+│   │   └── feature_request.md
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   └── dependabot.yml
+│
 ├── docs/
-│   └── screenshots/             # Interface SVG screenshots
-├── tests/                       # Unit test suite (pytest)
-│   ├── test_app.py
-│   └── test_docker_client.py
-└── dockdash/
+│   └── screenshots/               # PNG + SVG screenshots for README
+│
+├── tests/                         # Pytest unit & integration tests
+│   ├── test_app.py                # Core app, tab switching, item selection
+│   ├── test_docker_client.py      # Docker SDK client wrapper tests
+│   ├── test_container_create.py   # Container creation wizard tests
+│   └── test_log_viewer.py         # Log viewer component tests
+│
+└── dockdash/                      # Main package
     ├── __init__.py
-    ├── app.py                   # Main Textual App & global event routing
-    ├── docker_client.py         # Async Docker Engine API client wrapper
-    ├── styles.tcss              # High-contrast stylesheet
-    ├── screens/
-    │   ├── containers.py        # Containers management screen
-    │   ├── images.py            # Images management screen
-    │   ├── volumes.py           # Volumes management screen
-    │   ├── networks.py          # Networks management screen
-    │   ├── compose.py           # Docker Compose stacks screen
-    │   └── system.py            # Engine status & cleanup screen
-    ├── widgets/
-    │   ├── container_detail.py  # Container attributes panel
-    │   ├── log_viewer.py        # Full-screen log viewer screen
-    │   ├── stats_display.py     # Real-time container stats widget
-    │   ├── pull_progress.py     # Image pull progress bar
-    │   └── search_bar.py        # Search and filter bar
-    └── modals/
-        ├── container_create.py  # Full-screen container creation wizard
-        ├── dockerfile_editor.py # Full-screen Dockerfile editor
-        ├── confirm_dialog.py    # Confirmation modal
-        ├── input_dialog.py      # Text input modal
-        ├── inspect_dialog.py    # Full-screen JSON inspect dialog
-        └── help_dialog.py       # Keybindings reference modal
+    ├── app.py                     # Textual App entry point & global routing
+    ├── docker_client.py           # Async Docker Engine API wrapper
+    ├── styles.tcss                # High-contrast dark theme stylesheet
+    │
+    ├── screens/                   # Tab screen components
+    │   ├── containers.py          # Container management
+    │   ├── images.py              # Image management
+    │   ├── volumes.py             # Volume management
+    │   ├── networks.py            # Network management
+    │   ├── compose.py             # Docker Compose stacks
+    │   └── system.py              # Engine status & cleanup
+    │
+    ├── widgets/                   # Reusable UI widgets
+    │   ├── container_detail.py    # Container attributes panel
+    │   ├── log_viewer.py          # Full-screen log viewer
+    │   ├── stats_display.py       # Real-time stats bars
+    │   ├── pull_progress.py       # Image pull progress indicator
+    │   └── search_bar.py          # Search & filter bar
+    │
+    └── modals/                    # Dialog & modal screens
+        ├── container_create.py    # Container creation wizard
+        ├── dockerfile_editor.py   # Dockerfile editor
+        ├── confirm_dialog.py      # Confirmation dialog
+        ├── input_dialog.py        # Text input dialog
+        ├── inspect_dialog.py      # JSON inspect viewer
+        └── help_dialog.py         # Keyboard shortcuts reference
 ```
+
+### Tech Stack
+
+| Layer | Technology |
+| :--- | :--- |
+| **TUI Framework** | [Textual](https://textual.textualize.io/) `>= 1.0.0` |
+| **Docker SDK** | [docker-py](https://docker-py.readthedocs.io/) `>= 7.0.0` |
+| **Rich Text** | [Rich](https://rich.readthedocs.io/) `>= 13.0.0` |
+| **Linting** | [Ruff](https://docs.astral.sh/ruff/) |
+| **Testing** | [pytest](https://docs.pytest.org/) + [pytest-asyncio](https://pytest-asyncio.readthedocs.io/) |
+| **CI/CD** | GitHub Actions (lint / test matrix / build verification / release) |
+| **Packaging** | setuptools + [PyInstaller](https://pyinstaller.org/) for standalone binaries |
 
 ---
 
-## Author & License
+## Running Tests
 
-Developed and maintained by **Ketan Chaudhary**.
+```bash
+# Install dev dependencies
+pip install -e ".[dev]"
 
-Distributed under the **MIT License**. See [LICENSE](LICENSE) for full details.
+# Run the full test suite
+pytest
 
-Copyright (c) 2026 **Ketan Chaudhary**
+# Run with verbose output
+pytest -v
+
+# Run a specific test file
+pytest tests/test_app.py -v
+```
+
+### CI Pipeline
+
+Every push and pull request triggers the full CI pipeline:
+
+1. **Lint** — Ruff code quality checks
+2. **Test** — Pytest across a matrix of OS (Linux, macOS, Windows) × Python (3.10, 3.11, 3.12)
+3. **Build** — PyInstaller executable build verification + Python package build
+
+---
+
+## Contributing
+
+Contributions are welcome! Here's how to get started:
+
+1. **Fork** the repository
+2. **Create a branch** for your feature or fix:
+   ```bash
+   git checkout -b feat/my-new-feature
+   ```
+3. **Install dev dependencies**:
+   ```bash
+   pip install -e ".[dev]"
+   ```
+4. **Make your changes** and ensure:
+   - All tests pass: `pytest`
+   - Code passes lint: `ruff check .`
+5. **Commit** with a descriptive message following [Conventional Commits](https://www.conventionalcommits.org/):
+   ```bash
+   git commit -m "feat: add awesome new feature"
+   ```
+6. **Push** and open a **Pull Request**
+
+### Issue Templates
+
+- [Bug Report](https://github.com/Ketan-Chaudhary/dockerdash/issues/new?template=bug_report.md)
+- [Feature Request](https://github.com/Ketan-Chaudhary/dockerdash/issues/new?template=feature_request.md)
+
+---
+
+## Roadmap
+
+- [ ] Remote Docker host connection support
+- [ ] Custom theme / color scheme configuration
+- [ ] Container file browser & file transfer
+- [ ] Image vulnerability scanning integration
+- [ ] Plugin / extension system
+- [ ] Mouse interaction support
+
+Have an idea? [Open a feature request!](https://github.com/Ketan-Chaudhary/dockerdash/issues/new?template=feature_request.md)
+
+---
+
+## License
+
+Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for full details.
+
+Copyright © 2026 **Ketan Chaudhary**
+
+---
+
+<p align="center">
+  If DockDash is useful to you, consider giving it a star on <a href="https://github.com/Ketan-Chaudhary/dockerdash">GitHub</a>.
+</p>

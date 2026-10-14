@@ -165,10 +165,16 @@ class ContainersTab(Vertical):
         container = self._get_selected_container()
         return container["full_id"] if container else None
 
-    # ── Close side panel ──────────────────────────────────────────────
+    # ── Close side panel / exit search ────────────────────────────────
 
     def action_close_side_panel(self) -> None:
-        """Close the detail/stats side panel with Escape."""
+        """Close search or detail/stats side panel with Escape."""
+        search_bar = self.query_one("#container-search", SearchBar)
+        if search_bar.visible_search or len(self._filtered) < len(self._containers):
+            search_bar.hide()
+            self.query_one("#container-table", DataTable).focus()
+            return
+
         side = self.query_one("#container-side")
         if side.styles.display != "none":
             side.styles.display = "none"
@@ -195,7 +201,16 @@ class ContainersTab(Vertical):
             ]
         self._update_table()
 
+    def on_search_bar_submitted(self, event: SearchBar.Submitted) -> None:
+        """When pressing Enter in search bar, navigate into the results table."""
+        table = self.query_one("#container-table", DataTable)
+        table.focus()
+        if table.row_count > 0:
+            table.cursor_coordinate = (0, 0)
+
     def on_search_bar_dismissed(self, event: SearchBar.Dismissed) -> None:
+        self._filtered = list(self._containers)
+        self._update_table()
         table = self.query_one("#container-table", DataTable)
         table.focus()
 

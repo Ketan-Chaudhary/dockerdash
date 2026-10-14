@@ -28,6 +28,7 @@ class ImagesTab(Vertical):
         Binding("h", "image_history", "History", show=True),
         Binding("e", "edit_dockerfile", "Dockerfile", show=True),
         Binding("slash", "search", "Search", show=False),
+        Binding("escape", "exit_search", "Exit Search", show=False),
         Binding("j", "cursor_down", "Down", show=False),
         Binding("k", "cursor_up", "Up", show=False),
     ]
@@ -40,6 +41,7 @@ class ImagesTab(Vertical):
 
     def compose(self) -> ComposeResult:
         yield SearchBar(id="image-search")
+        yield DataTable(id="image-table", cursor_type="row")
         yield Static(
             "[#79c0ff bold]IMAGES[/]  [#484f58]p[/]=pull  "
             "[#484f58]d[/]=delete  [#484f58]t[/]=tag  "
@@ -49,7 +51,6 @@ class ImagesTab(Vertical):
             "[#484f58]/[/]=search",
             classes="actions-bar",
         )
-        yield DataTable(id="image-table", cursor_type="row")
 
     def on_mount(self) -> None:
         table = self.query_one("#image-table", DataTable)
@@ -139,7 +140,23 @@ class ImagesTab(Vertical):
             ]
         self._update_table()
 
+    def action_exit_search(self) -> None:
+        """Exit search and restore full list with Escape."""
+        search_bar = self.query_one("#image-search", SearchBar)
+        if search_bar.visible_search or len(self._filtered) < len(self._images):
+            search_bar.hide()
+            self.query_one("#image-table", DataTable).focus()
+
+    def on_search_bar_submitted(self, event: SearchBar.Submitted) -> None:
+        """When pressing Enter in search bar, navigate into the results table."""
+        table = self.query_one("#image-table", DataTable)
+        table.focus()
+        if table.row_count > 0:
+            table.cursor_coordinate = (0, 0)
+
     def on_search_bar_dismissed(self, event: SearchBar.Dismissed) -> None:
+        self._filtered = list(self._images)
+        self._update_table()
         self.query_one("#image-table", DataTable).focus()
 
     # ── Navigation ────────────────────────────────────────────────────
