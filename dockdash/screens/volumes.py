@@ -22,6 +22,7 @@ class VolumesTab(Vertical):
         Binding("d", "delete_volume", "Delete", show=True),
         Binding("i", "inspect_volume", "Inspect", show=True),
         Binding("slash", "search", "Search", show=False),
+        Binding("escape", "exit_search", "Exit Search", show=False),
         Binding("j", "cursor_down", "Down", show=False),
         Binding("k", "cursor_up", "Up", show=False),
     ]
@@ -130,7 +131,23 @@ class VolumesTab(Vertical):
             ]
         self._update_table()
 
+    def action_exit_search(self) -> None:
+        """Exit search and restore full list with Escape."""
+        search_bar = self.query_one("#volume-search", SearchBar)
+        if search_bar.visible_search or len(self._filtered) < len(self._volumes):
+            search_bar.hide()
+            self.query_one("#volume-table", DataTable).focus()
+
+    def on_search_bar_submitted(self, event: SearchBar.Submitted) -> None:
+        """When pressing Enter in search bar, navigate into the results table."""
+        table = self.query_one("#volume-table", DataTable)
+        table.focus()
+        if table.row_count > 0:
+            table.cursor_coordinate = (0, 0)
+
     def on_search_bar_dismissed(self, event: SearchBar.Dismissed) -> None:
+        self._filtered = list(self._volumes)
+        self._update_table()
         self.query_one("#volume-table", DataTable).focus()
 
     # ── Navigation ────────────────────────────────────────────────────

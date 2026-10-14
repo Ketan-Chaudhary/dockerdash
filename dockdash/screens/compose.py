@@ -198,7 +198,16 @@ class ComposeTab(Vertical):
             ]
         self._update_table()
 
+    def on_search_bar_submitted(self, event: SearchBar.Submitted) -> None:
+        """When pressing Enter in search bar, navigate into the results table."""
+        table = self.query_one("#compose-table", DataTable)
+        table.focus()
+        if table.row_count > 0:
+            table.cursor_coordinate = (0, 0)
+
     def on_search_bar_dismissed(self, event: SearchBar.Dismissed) -> None:
+        self._filtered = list(self._projects)
+        self._update_table()
         self.query_one("#compose-table", DataTable).focus()
 
     # ── Navigation ────────────────────────────────────────────────────
@@ -210,6 +219,12 @@ class ComposeTab(Vertical):
         self.query_one("#compose-table", DataTable).action_cursor_up()
 
     def action_close_side_panel(self) -> None:
+        search_bar = self.query_one("#compose-search", SearchBar)
+        if search_bar.visible_search or len(self._filtered) < len(self._projects):
+            search_bar.hide()
+            self.query_one("#compose-table", DataTable).focus()
+            return
+
         side = self.query_one("#compose-side")
         if side.styles.display != "none":
             side.styles.display = "none"

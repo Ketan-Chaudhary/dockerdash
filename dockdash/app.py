@@ -59,6 +59,7 @@ class DockerDashApp(App):
         Binding("4", "tab_4", "Networks", show=False, priority=True),
         Binding("5", "tab_5", "Compose", show=False, priority=True),
         Binding("6", "tab_6", "System", show=False, priority=True),
+        Binding("slash", "search", "Search", show=False),
     ]
 
     def __init__(self) -> None:
@@ -206,6 +207,19 @@ class DockerDashApp(App):
         try:
             tabs = self.query_one("#main-tabs", TabbedContent)
             tabs.active = tab_id
+            self.call_later(self._focus_active_tab_content)
+        except Exception:
+            pass
+
+    def action_search(self) -> None:
+        """Forward search action to the active tab's SearchBar."""
+        from dockdash.widgets.search_bar import SearchBar
+        try:
+            tabs = self.query_one("#main-tabs", TabbedContent)
+            active_pane = tabs.query_one(f"#{tabs.active}")
+            search_bars = active_pane.query(SearchBar)
+            if search_bars:
+                search_bars.first().show()
         except Exception:
             pass
 
@@ -214,6 +228,7 @@ class DockerDashApp(App):
     ) -> None:
         """Refresh data when a tab is activated."""
         self._refresh_active_tab()
+        self.call_later(self._focus_active_tab_content)
 
     @work(exclusive=True)
     async def _refresh_active_tab(self) -> None:

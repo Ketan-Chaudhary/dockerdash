@@ -518,23 +518,41 @@ ProgressBar PercentageStatus {
 
 /* ── Search Bar ────────────────────────────────────────────────── */
 
-.search-container {
+SearchBar {
     dock: top;
     height: 3;
     background: #161b22;
-    border-bottom: solid #30363d;
+    border: solid #388bfd;
     padding: 0 1;
+    layout: horizontal;
     display: none;
+    margin-bottom: 1;
 }
 
-.search-container.-visible {
+SearchBar.-visible {
     display: block;
 }
 
-.search-container Input {
-    width: 100%;
-    border: solid #58a6ff;
+SearchBar .search-icon {
+    width: auto;
+    height: 1;
+    color: #58a6ff;
+    text-style: bold;
+    margin: 0 1 0 0;
 }
+
+SearchBar Input {
+    width: 1fr;
+    height: 1;
+    border: none;
+    background: transparent;
+    padding: 0;
+}
+
+SearchBar Input:focus {
+    border: none;
+}
+
 
 /* ── Tab Actions Bar ───────────────────────────────────────────── */
 
