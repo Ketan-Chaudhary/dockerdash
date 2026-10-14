@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [v0.1.5] - 2026-10-15
+
 ### Added
 - Real-time live log streaming (`tail -f`) for containers and Docker Compose stacks in `LogViewerScreen` via dedicated background threads and async workers.
 - Interactive log search and live regex/text filter bar (`/`) with instant match highlighting and match counting (`X/Y lines`).
