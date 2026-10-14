@@ -197,23 +197,68 @@ class ContainerCreateDialog(ModalScreen[dict | None]):
         self.query_one("#field-image", Input).focus()
 
     def _parse_ports(self, raw: str) -> dict | None:
+        """Parse port mappings string into Docker SDK ports dict.
+
+        Supported formats (comma-separated):
+          - "8080:80"                  -> {'80/tcp': 8080}
+          - "8080:80/udp"              -> {'80/udp': 8080}
+          - "127.0.0.1:8080:80"        -> {'80/tcp': ('127.0.0.1', 8080)}
+          - "127.0.0.1:8080:80/udp"    -> {'80/udp': ('127.0.0.1', 8080)}
+          - "80"                       -> {'80/tcp': None}
+          - "80/udp"                   -> {'80/udp': None}
+
+        Raises ValueError on malformed syntax or out-of-range port numbers.
+        """
         if not raw.strip():
             return None
-        ports = {}
+
+        def _validate_port(port_str: str) -> int:
+            try:
+                port_num = int(port_str)
+            except ValueError:
+                raise ValueError(f"Port '{port_str}' must be an integer.") from None
+            if not (1 <= port_num <= 65535):
+                raise ValueError(f"Port {port_num} must be between 1 and 65535.")
+            return port_num
+
+        def _split_container_port_proto(spec: str) -> tuple[int, str]:
+            if "/" in spec:
+                p_str, proto = spec.split("/", 1)
+                proto = proto.lower().strip()
+                if proto not in ("tcp", "udp", "sctp"):
+                    raise ValueError(f"Invalid protocol '{proto}'. Must be tcp, udp, or sctp.")
+            else:
+                p_str, proto = spec, "tcp"
+            return _validate_port(p_str.strip()), proto
+
+        ports: dict = {}
         for mapping in raw.split(","):
             mapping = mapping.strip()
-            if ":" in mapping:
-                parts = mapping.split(":")
-                host_port = parts[0].strip()
-                container_port = parts[1].strip()
-                if "/" not in container_port:
-                    container_port += "/tcp"
-                ports[container_port] = int(host_port)
+            if not mapping:
+                continue
+
+            parts = [p.strip() for p in mapping.split(":")]
+            if len(parts) == 1:
+                c_port, proto = _split_container_port_proto(parts[0])
+                ports[f"{c_port}/{proto}"] = None
+            elif len(parts) == 2:
+                if not parts[0] or not parts[1]:
+                    raise ValueError(f"Invalid port mapping '{mapping}'.")
+                h_port = _validate_port(parts[0])
+                c_port, proto = _split_container_port_proto(parts[1])
+                ports[f"{c_port}/{proto}"] = h_port
+            elif len(parts) == 3:
+                host_ip, h_str, c_spec = parts
+                if not host_ip or not h_str or not c_spec:
+                    raise ValueError(f"Invalid port mapping '{mapping}'.")
+                h_port = _validate_port(h_str)
+                c_port, proto = _split_container_port_proto(c_spec)
+                ports[f"{c_port}/{proto}"] = (host_ip, h_port)
             else:
-                port = mapping.strip()
-                if "/" not in port:
-                    port += "/tcp"
-                ports[port] = None
+                raise ValueError(
+                    f"Invalid port mapping '{mapping}'. Expected 'host:container' or 'ip:host:container'."
+                )
+
         return ports if ports else None
 
     def _parse_volumes(self, raw: str) -> dict | None:
@@ -222,12 +267,15 @@ class ContainerCreateDialog(ModalScreen[dict | None]):
         volumes = {}
         for mapping in raw.split(","):
             mapping = mapping.strip()
+            if not mapping:
+                continue
             parts = mapping.split(":")
             if len(parts) >= 2:
                 host = parts[0].strip()
                 container = parts[1].strip()
                 mode = parts[2].strip() if len(parts) > 2 else "rw"
-                volumes[host] = {"bind": container, "mode": mode}
+                if host and container:
+                    volumes[host] = {"bind": container, "mode": mode}
         return volumes if volumes else None
 
     def _parse_env(self, raw: str) -> list | None:
@@ -236,6 +284,8 @@ class ContainerCreateDialog(ModalScreen[dict | None]):
         env = []
         for item in raw.split(","):
             item = item.strip()
+            if not item:
+                continue
             if "=" in item:
                 env.append(item)
         return env if env else None
@@ -248,15 +298,18 @@ class ContainerCreateDialog(ModalScreen[dict | None]):
             self.action_create()
 
     def action_create(self) -> None:
-        image = self.query_one("#field-image", Input).value.strip()
+        image_input = self.query_one("#field-image", Input)
+        image = image_input.value.strip()
         if not image:
-            self.query_one("#field-image", Input).add_class("-invalid")
+            image_input.add_class("-invalid")
             self.notify("Image is required", severity="error")
             return
+        image_input.remove_class("-invalid")
 
         name = self.query_one("#field-name", Input).value.strip()
         command = self.query_one("#field-command", Input).value.strip()
-        ports_raw = self.query_one("#field-ports", Input).value
+        ports_input = self.query_one("#field-ports", Input)
+        ports_raw = ports_input.value
         volumes_raw = self.query_one("#field-volumes", Input).value
         env_raw = self.query_one("#field-env", Input).value
         network = self.query_one("#field-network", Input).value.strip()
@@ -273,7 +326,14 @@ class ContainerCreateDialog(ModalScreen[dict | None]):
         if command:
             config["command"] = command
 
-        ports = self._parse_ports(ports_raw)
+        try:
+            ports = self._parse_ports(ports_raw)
+            ports_input.remove_class("-invalid")
+        except ValueError as e:
+            ports_input.add_class("-invalid")
+            self.notify(str(e), severity="error")
+            return
+
         if ports:
             config["ports"] = ports
 
