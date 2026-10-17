@@ -172,7 +172,7 @@ DockDash is fully operable via keyboard. Press `?` or `F1` at any time for the c
 | Key | Action |
 | :---: | :--- |
 | `1` – `6` | Switch tabs (Containers / Images / Volumes / Networks / Compose / System) |
-| `t` | Open color templates & theme settings |
+| `t` / `T` | Open color templates & theme settings |
 | `r` / `F5` | Refresh current tab |
 | `/` | Open search & filter bar |
 | `?` / `F1` | Open keyboard shortcuts help |
@@ -192,7 +192,7 @@ DockDash is fully operable via keyboard. Press `?` or `F1` at any time for the c
 | `l` | Open log viewer |
 | `a` | Toggle live stats panel |
 | `i` | JSON inspect |
-| `t` | Attach interactive shell |
+| `t` | Attach terminal (Quick shell picker: auto / bash / sh / zsh / ash) |
 | `Enter` | Toggle detail side panel |
 
 ### Log Viewer (`l`)
@@ -217,6 +217,8 @@ DockDash is fully operable via keyboard. Press `?` or `F1` at any time for the c
 | `c` | Create container from image |
 | `e` | Open Dockerfile editor |
 | `l` / `h` | Visual image layer inspector & history |
+| `u` | Quick filter (All / Dangling / Unused) |
+| `P` | Prune dangling images |
 | `i` | JSON inspect |
 | `d` | Delete image |
 

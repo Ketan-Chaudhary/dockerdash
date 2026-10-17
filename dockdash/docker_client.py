@@ -308,11 +308,19 @@ class DockerClient:
     # ── Image Operations ──────────────────────────────────────────────
 
     @_handle_errors
-    async def list_images(self) -> list[dict]:
-        images = await self._run_sync(self.client.images.list, all=False)
+    async def list_images(self, all: bool = True) -> list[dict]:
+        images = await self._run_sync(self.client.images.list, all=all)
+        try:
+            containers = await self._run_sync(self.client.containers.list, all=True)
+            used_image_ids = {c.attrs.get("Image") for c in containers}
+        except Exception:
+            used_image_ids = set()
+
         result = []
         for img in images:
             tags = img.tags if img.tags else ["<none>:<none>"]
+            is_dangling = not img.tags or any(t == "<none>:<none>" for t in tags)
+            in_use = (img.id in used_image_ids or img.short_id in used_image_ids)
             for tag in tags:
                 parts = tag.rsplit(":", 1)
                 repo = parts[0] if len(parts) > 1 else tag
@@ -324,6 +332,8 @@ class DockerClient:
                     "tag": tag_name,
                     "size": img.attrs.get("Size", 0),
                     "created": img.attrs.get("Created", ""),
+                    "is_dangling": is_dangling,
+                    "in_use": in_use,
                 })
         return result
 

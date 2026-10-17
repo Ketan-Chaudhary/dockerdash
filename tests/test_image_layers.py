@@ -145,3 +145,45 @@ async def test_images_tab_l_key_triggers_layers_modal(monkeypatch):
         await pilot.press("escape")
         await pilot.pause(0.1)
         assert app.screen.__class__.__name__ != "ImageLayersDialog"
+
+
+@pytest.mark.asyncio
+async def test_image_dangling_and_unused_filter(monkeypatch):
+    """Verify cycling filter mode via 'u' on ImagesTab."""
+    app = DockerDashApp()
+    async with app.run_test(size=(120, 36)) as pilot:
+        await pilot.pause()
+        app.action_tab_2()
+        await pilot.pause(0.2)
+
+        images_tab = app.query_one("#images-tab", ImagesTab)
+        fake_images = [
+            {"id": "111", "full_id": "sha256:111", "repository": "nginx", "tag": "alpine", "is_dangling": False, "in_use": True, "size": 1000},
+            {"id": "222", "full_id": "sha256:222", "repository": "<none>", "tag": "<none>", "is_dangling": True, "in_use": False, "size": 2000},
+            {"id": "333", "full_id": "sha256:333", "repository": "redis", "tag": "alpine", "is_dangling": False, "in_use": False, "size": 3000},
+        ]
+        async def fake_list_images(all=True):
+            return list(fake_images)
+        monkeypatch.setattr(images_tab._docker, "list_images", fake_list_images)
+        await images_tab.refresh_data()
+        assert len(images_tab._filtered) == 3
+
+        # Cycle filter mode to 'dangling' via 'u'
+        await pilot.press("u")
+        await pilot.pause(0.1)
+        assert images_tab._filter_mode == "dangling"
+        assert len(images_tab._filtered) == 1
+        assert images_tab._filtered[0]["id"] == "222"
+
+        # Cycle filter mode to 'unused' via 'u'
+        await pilot.press("u")
+        await pilot.pause(0.1)
+        assert images_tab._filter_mode == "unused"
+        assert len(images_tab._filtered) == 2
+        assert {img["id"] for img in images_tab._filtered} == {"222", "333"}
+
+        # Cycle back to 'all' via 'u'
+        await pilot.press("u")
+        await pilot.pause(0.1)
+        assert images_tab._filter_mode == "all"
+        assert len(images_tab._filtered) == 3

@@ -33,6 +33,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Cleaned Dockerfile instruction parser extracting commands (`RUN`, `COPY`, `ADD`, `ENV`, `CMD`, `ENTRYPOINT`, etc.).
   - Live command detail inspector pane with keyword syntax coloring and timestamp.
   - Quick keyboard actions: copy command to clipboard (`c`), toggle order between Base-first and Top-first (`o`), and navigate (`↑/↓`).
+- Container Shell Picker (`ShellPickerDialog` on `t`):
+  - Interactive horizontal 2-column modal dialog replacing default `/bin/sh` attach with shell detection and selection.
+  - Presets for Auto-detect (`bash` → `zsh` → `ash` → `sh`), `/bin/bash`, `/bin/sh`, `/bin/zsh`, `/bin/ash`, and custom command execution.
+  - Optional custom user/UID field (`-u user`) to attach as `root` or non-root users.
+  - Number shortcuts `1` through `6` for instant shell selection, with Enter/Esc submission.
+- Image Dangling & Unused Quick Filter (`u` toggle and `P` prune on Images tab):
+  - Cycle through filter views: `All` → `Dangling (<none>)` → `Unused (no container)` → `All`.
+  - Visual styling tags for `<none>` and `<dangling>` images in the image table.
+  - Dynamic actions bar filter badge showing matching image count.
+  - Dedicated `P` shortcut to prune dangling images with a confirmation dialog.
 
 ### Fixed
 - Fixed active tab title text clipping where `border-top` on single-line `Tab` widgets consumed the available cell height, leaving only a blue stripe without visible text.

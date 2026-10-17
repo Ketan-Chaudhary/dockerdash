@@ -15,6 +15,7 @@ from dockdash.docker_client import DockerClient, DockerClientError
 from dockdash.modals.confirm_dialog import ConfirmDialog
 from dockdash.modals.input_dialog import InputDialog
 from dockdash.modals.inspect_dialog import InspectDialog
+from dockdash.modals.shell_picker import ShellPickerDialog
 from dockdash.widgets.container_detail import ContainerDetail
 from dockdash.widgets.log_viewer import LogViewerScreen
 from dockdash.widgets.search_bar import SearchBar
@@ -383,8 +384,8 @@ class ContainersTab(Vertical):
         except DockerClientError as e:
             self.notify(str(e), severity="error")
 
-    async def action_attach_terminal(self) -> None:
-        """Suspend the TUI and exec into the container with an interactive shell."""
+    def action_attach_terminal(self) -> None:
+        """Prompt user with shell picker modal and exec into the container."""
         container = self._get_selected_container()
         if not container:
             return
@@ -392,6 +393,23 @@ class ContainersTab(Vertical):
             self.notify("Container must be running to attach", severity="warning")
             return
 
+        def on_shell_chosen(result: dict | None) -> None:
+            if result:
+                self.app.call_later(
+                    self._do_attach,
+                    container,
+                    result["command"],
+                    result.get("user"),
+                )
+
+        self.app.push_screen(ShellPickerDialog(container), on_shell_chosen)
+
+    def _do_attach(
+        self,
+        container: dict,
+        command: list[str],
+        user: str | None = None,
+    ) -> None:
         cid = container["full_id"]
         name = container["name"]
 
@@ -401,11 +419,17 @@ class ContainersTab(Vertical):
             driver.stop_application_mode()
 
         try:
-            print(f"\n── Attaching to container '{name}' ──")
+            user_msg = f" (as user '{user}')" if user else ""
+            print(f"\n── Attaching to container '{name}'{user_msg} ──")
             print("── Type 'exit' to return to DockDash ──\n")
+            exec_args = ["docker", "exec", "-it"]
+            if user:
+                exec_args.extend(["-u", user])
+            exec_args.append(cid)
+            exec_args.extend(command)
+
             subprocess.run(
-                ["docker", "exec", "-it", cid, "/bin/sh", "-c",
-                 "if command -v bash >/dev/null 2>&1; then exec bash; else exec sh; fi"],
+                exec_args,
                 stdin=sys.stdin,
                 stdout=sys.stdout,
                 stderr=sys.stderr,
@@ -414,9 +438,9 @@ class ContainersTab(Vertical):
             print("Error: 'docker' command not found in PATH")
         except Exception as e:
             print(f"Error: {e}")
-
-        if driver is not None:
-            driver.start_application_mode()
+        finally:
+            if driver is not None:
+                driver.start_application_mode()
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         """Show detail panel when a row is selected (Enter)."""
