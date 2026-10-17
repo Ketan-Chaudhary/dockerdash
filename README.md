@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/Ketan-Chaudhary/dockerdash/releases"><img src="https://img.shields.io/github/v/release/Ketan-Chaudhary/dockerdash?style=flat-square&color=blue" alt="Latest Release"></a>
   <a href="https://github.com/Ketan-Chaudhary/dockerdash/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Ketan-Chaudhary/dockerdash/ci.yml?branch=main&style=flat-square&label=CI" alt="CI Status"></a>
-  <a href="https://github.com/Ketan-Chaudhary/dockerdash/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Ketan-Chaudhary/dockerdash?style=flat-square&color=green" alt="License"></a>
+  <a href="https://github.com/Ketan-Chaudhary/dockerdash/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License"></a>
   <a href="https://github.com/Ketan-Chaudhary/dockerdash/stargazers"><img src="https://img.shields.io/github/stars/Ketan-Chaudhary/dockerdash?style=flat-square&color=yellow" alt="GitHub Stars"></a>
   <a href="https://github.com/Ketan-Chaudhary/dockerdash/issues"><img src="https://img.shields.io/github/issues/Ketan-Chaudhary/dockerdash?style=flat-square" alt="Issues"></a>
 </p>
