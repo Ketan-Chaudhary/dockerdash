@@ -36,9 +36,9 @@ class NetworksTab(Vertical):
     def compose(self) -> ComposeResult:
         yield SearchBar(id="network-search")
         yield Static(
-            "[#79c0ff bold]NETWORKS[/]  [#484f58]c[/]=create  "
-            "[#484f58]d[/]=delete  [#484f58]i[/]=inspect  "
-            "[#484f58]/[/]=search",
+            "[#38bdf8 bold] ⯈ NETWORKS [/]  [#38bdf8 bold]c[/][#cbd5e1]=create  "
+            "[#38bdf8 bold]d[/][#cbd5e1]=delete  [#38bdf8 bold]i[/][#cbd5e1]=inspect  "
+            "[#38bdf8 bold]/[/][#cbd5e1]=search",
             classes="actions-bar",
         )
         yield DataTable(id="network-table", cursor_type="row")

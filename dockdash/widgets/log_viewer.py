@@ -48,31 +48,32 @@ class LogViewerScreen(ModalScreen[None]):
     DEFAULT_CSS = """
     LogViewerScreen {
         align: center middle;
-        background: #0d1117;
+        background: $background;
     }
     LogViewerScreen .log-container {
         width: 100%;
         height: 100%;
-        background: #0d1117;
+        background: $background;
     }
     LogViewerScreen .log-header {
         height: 1;
-        background: #161b22;
-        color: #e6edf3;
+        background: $surface;
+        color: $foreground;
         padding: 0 1;
-        border-bottom: solid #30363d;
+        border-bottom: solid $border;
     }
     LogViewerScreen RichLog {
         height: 1fr;
-        background: #0d1117;
+        background: $background;
         padding: 0 1;
     }
     LogViewerScreen .log-search-bar {
         height: 3;
-        background: #161b22;
+        background: $surface;
         padding: 0 1;
         layout: horizontal;
         display: none;
+        border-bottom: solid $border;
     }
     LogViewerScreen .log-search-bar.visible {
         display: block;
@@ -81,29 +82,29 @@ class LogViewerScreen(ModalScreen[None]):
         width: auto;
         height: 3;
         content-align: center middle;
-        color: #79c0ff;
+        color: $primary;
         text-style: bold;
     }
     LogViewerScreen .log-search-input {
         width: 1fr;
         height: 3;
-        border: solid #388bfd;
-        background: #0d1117;
-        color: #f0f6fc;
+        border: solid $primary;
+        background: $surface;
+        color: $foreground;
     }
     LogViewerScreen .log-search-matches {
         width: auto;
         height: 3;
         content-align: center middle;
-        color: #8b949e;
+        color: $text;
         padding-left: 1;
     }
     LogViewerScreen .log-footer {
         height: 1;
-        background: #161b22;
-        color: #8b949e;
+        background: $surface;
+        color: $text;
         padding: 0 1;
-        border-top: solid #21262d;
+        border-top: solid $border;
     }
     """
 
@@ -160,14 +161,14 @@ class LogViewerScreen(ModalScreen[None]):
                 )
                 yield Static("0 matches", id="log-search-matches", classes="log-search-matches")
             yield Static(
-                "[#79c0ff bold]Esc[/]/[#79c0ff bold]q[/] Close  "
-                "[#79c0ff bold]f[/] Follow  "
-                "[#79c0ff bold]a[/] Auto-Scroll  "
-                "[#79c0ff bold]/[/] Filter  "
-                "[#79c0ff bold]t[/] Timestamps  "
-                "[#79c0ff bold]w[/] Wrap  "
-                "[#79c0ff bold]c[/] Clear  "
-                "[#79c0ff bold]s[/] Save",
+                "[#38bdf8 bold]Esc[/]/[#38bdf8 bold]q[/][#cbd5e1] Close  "
+                "[#38bdf8 bold]f[/][#cbd5e1] Follow  "
+                "[#38bdf8 bold]a[/][#cbd5e1] Auto-Scroll  "
+                "[#38bdf8 bold]/[/][#cbd5e1] Filter  "
+                "[#38bdf8 bold]t[/][#cbd5e1] Timestamps  "
+                "[#38bdf8 bold]w[/][#cbd5e1] Wrap  "
+                "[#38bdf8 bold]c[/][#cbd5e1] Clear  "
+                "[#38bdf8 bold]s[/][#cbd5e1] Save",
                 classes="log-footer",
             )
 

@@ -35,7 +35,8 @@ class ConfirmDialog(ModalScreen[bool]):
         self._danger = danger
 
     def compose(self) -> ComposeResult:
-        with Vertical(classes="modal-dialog"):
+        dialog_class = "modal-dialog -danger" if self._danger else "modal-dialog"
+        with Vertical(classes=dialog_class):
             yield Static(self._title, classes="modal-title")
             with Vertical(classes="modal-body"):
                 if self._danger:

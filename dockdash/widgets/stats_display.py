@@ -28,12 +28,12 @@ class StatsDisplay(Vertical):
     StatsDisplay {
         height: auto;
         min-height: 12;
-        border: solid #30363d;
-        background: #161b22;
+        border: solid $border;
+        background: $surface;
         padding: 1 2;
     }
     StatsDisplay .stats-title {
-        color: #79c0ff;
+        color: $primary;
         text-style: bold;
         padding: 0 0 1 0;
     }
@@ -61,34 +61,34 @@ class StatsDisplay(Vertical):
     def update_stats(self, stats: dict) -> None:
         """Update the display with parsed stats data."""
         cpu = stats.get("cpu_percent", 0.0)
-        cpu_color = "#3fb950" if cpu < 50 else "#d29922" if cpu < 80 else "#f85149"
+        cpu_color = "#34d399" if cpu < 50 else "#fbbf24" if cpu < 80 else "#f87171"
         self.query_one("#stat-cpu", Static).update(
-            f"  [#79c0ff bold]CPU    [/]  {_bar(cpu, 30, cpu_color)}"
+            f"  [#38bdf8 bold]CPU    [/]  {_bar(cpu, 30, cpu_color)}"
         )
 
         mem_pct = stats.get("mem_percent", 0.0)
         mem_used = _format_bytes(stats.get("mem_usage", 0))
         mem_limit = _format_bytes(stats.get("mem_limit", 0))
-        mem_color = "#3fb950" if mem_pct < 50 else "#d29922" if mem_pct < 80 else "#f85149"
+        mem_color = "#34d399" if mem_pct < 50 else "#fbbf24" if mem_pct < 80 else "#f87171"
         self.query_one("#stat-mem", Static).update(
-            f"  [#79c0ff bold]MEMORY [/]  {_bar(mem_pct, 30, mem_color)}  ({mem_used} / {mem_limit})"
+            f"  [#38bdf8 bold]MEMORY [/]  {_bar(mem_pct, 30, mem_color)}  ({mem_used} / {mem_limit})"
         )
 
         net_rx = _format_bytes(stats.get("net_rx", 0))
         net_tx = _format_bytes(stats.get("net_tx", 0))
         self.query_one("#stat-net", Static).update(
-            f"  [#79c0ff bold]NET I/O[/]  [#3fb9a0]▼ {net_rx}[/]  [#d29922]▲ {net_tx}[/]"
+            f"  [#38bdf8 bold]NET I/O[/]  [#34d399]▼ {net_rx}[/]  [#fbbf24]▲ {net_tx}[/]"
         )
 
         blk_r = _format_bytes(stats.get("block_read", 0))
         blk_w = _format_bytes(stats.get("block_write", 0))
         self.query_one("#stat-block", Static).update(
-            f"  [#79c0ff bold]DISK   [/]  [#3fb9a0]R {blk_r}[/]  [#d29922]W {blk_w}[/]"
+            f"  [#38bdf8 bold]DISK   [/]  [#34d399]R {blk_r}[/]  [#fbbf24]W {blk_w}[/]"
         )
 
         pids = stats.get("pids", 0)
         self.query_one("#stat-pids", Static).update(
-            f"  [#79c0ff bold]PIDS   [/]  [#e6edf3]{pids}[/]"
+            f"  [#38bdf8 bold]PIDS   [/]  [#f8fafc]{pids}[/]"
         )
 
     def show_error(self, message: str) -> None:

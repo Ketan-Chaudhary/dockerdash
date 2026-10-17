@@ -20,8 +20,8 @@ class SearchBar(Horizontal):
     SearchBar {
         dock: top;
         height: 3;
-        background: #161b22;
-        border: solid #388bfd;
+        background: $surface;
+        border: solid $primary;
         padding: 0 1;
         layout: horizontal;
         display: none;
@@ -33,7 +33,7 @@ class SearchBar(Horizontal):
     SearchBar .search-icon {
         width: auto;
         height: 1;
-        color: #58a6ff;
+        color: $primary;
         text-style: bold;
         margin: 0 1 0 0;
     }
@@ -42,6 +42,7 @@ class SearchBar(Horizontal):
         height: 1;
         border: none;
         background: transparent;
+        color: $foreground;
         padding: 0;
     }
     SearchBar Input:focus {

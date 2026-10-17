@@ -12,7 +12,7 @@ from dockdash.modals.confirm_dialog import ConfirmDialog
 
 
 def _kv(label: str, value: str, label_width: int = 22) -> str:
-    return f"  [#8b949e bold]{label:<{label_width}}[/] [#f0f6fc]{value}[/]"
+    return f"  [#94a3b8 bold]{label:<{label_width}}[/] [#f8fafc]{value}[/]"
 
 
 class SystemTab(Vertical):
@@ -33,27 +33,27 @@ class SystemTab(Vertical):
     DEFAULT_CSS = """
     SystemTab {
         height: 1fr;
-        background: #0d1117;
+        background: $background;
     }
     SystemTab .system-scroll {
         height: 1fr;
         padding: 0 1;
     }
     SystemTab .info-section {
-        background: #161b22;
-        border: solid #30363d;
+        background: $surface;
+        border: solid $border;
         padding: 1 2;
         margin: 0 0 1 0;
     }
     SystemTab .cleanup-section {
-        background: #161b22;
-        border: solid #d29922;
+        background: $surface;
+        border: solid $warning;
         padding: 1 2;
         margin: 1 0;
         height: auto;
     }
     SystemTab .cleanup-title {
-        color: #d29922;
+        color: $warning;
         text-style: bold;
         padding: 0 0 1 0;
     }
@@ -65,6 +65,8 @@ class SystemTab(Vertical):
     }
     SystemTab .cleanup-grid Button {
         margin: 0 1 0 0;
+        min-width: 17;
+        height: 3;
     }
     """
 
@@ -74,9 +76,9 @@ class SystemTab(Vertical):
 
     def compose(self) -> ComposeResult:
         yield Static(
-            "[#79c0ff bold]SYSTEM[/]  [#79c0ff bold]←→↑↓[/]=navigate buttons  "
-            "[#79c0ff bold]Enter[/]=run action  "
-            "[#484f58]c/i/v/n/x[/]=shortcuts",
+            "[#38bdf8 bold] ⯈ SYSTEM [/]  [#38bdf8 bold]←→↑↓[/][#cbd5e1]=navigate  "
+            "[#38bdf8 bold]Enter[/][#cbd5e1]=run action  "
+            "[#38bdf8 bold]c/i/v/n/x[/][#cbd5e1]=shortcuts",
             classes="actions-bar",
         )
         with VerticalScroll(classes="system-scroll"):
@@ -88,7 +90,7 @@ class SystemTab(Vertical):
             # Prominent Cleanup Actions Panel
             with Vertical(classes="cleanup-section"):
                 yield Static(
-                    "⟨ CLEANUP ACTIONS ⟩  [#8b949e]Use Arrow Keys or Tab to traverse buttons — Enter to select[/]",
+                    "⟨ CLEANUP ACTIONS ⟩  [#cbd5e1]Use Arrow Keys or Tab to traverse buttons — Enter to select[/]",
                     classes="cleanup-title",
                 )
                 with Horizontal(classes="cleanup-grid"):
@@ -146,7 +148,7 @@ class SystemTab(Vertical):
         fmt = DockerClient.format_bytes
 
         lines = [
-            "[#3fb9a0 bold]━━ Docker Engine ━━[/]\n",
+            "[#38bdf8 bold]━━ Docker Engine ━━[/]\n",
             _kv("Server Version", info.get("ServerVersion", "N/A")),
             _kv("API Version", info.get("ApiVersion", "N/A") if "ApiVersion" in info else "N/A"),
             _kv("OS / Architecture", f"{info.get('OperatingSystem', 'N/A')} / {info.get('Architecture', 'N/A')}"),
@@ -155,7 +157,7 @@ class SystemTab(Vertical):
             _kv("Logging Driver", info.get("LoggingDriver", "N/A")),
             _kv("Cgroup Driver", info.get("CgroupDriver", "N/A")),
             "",
-            "[#3fb9a0 bold]━━ Resources ━━[/]\n",
+            "[#38bdf8 bold]━━ Resources ━━[/]\n",
             _kv("CPUs", str(info.get("NCPU", "N/A"))),
             _kv("Total Memory", fmt(info.get("MemTotal", 0))),
             _kv("Containers", f"{info.get('ContainersRunning', 0)} running / "
@@ -163,7 +165,7 @@ class SystemTab(Vertical):
                              f"{info.get('ContainersStopped', 0)} stopped"),
             _kv("Images Total", str(info.get("Images", 0))),
             "",
-            "[#3fb9a0 bold]━━ Runtime ━━[/]\n",
+            "[#38bdf8 bold]━━ Runtime ━━[/]\n",
             _kv("Docker Root Dir", info.get("DockerRootDir", "N/A")),
             _kv("Daemon Name", info.get("Name", "N/A")),
         ]
@@ -172,7 +174,7 @@ class SystemTab(Vertical):
 
     def _render_usage(self, usage: dict) -> None:
         fmt = DockerClient.format_bytes
-        lines = ["\n[#3fb9a0 bold]━━ Disk Usage Breakdown ━━[/]\n"]
+        lines = ["\n[#38bdf8 bold]━━ Disk Usage Breakdown ━━[/]\n"]
 
         # Images
         images = usage.get("Images", []) or []
@@ -197,7 +199,7 @@ class SystemTab(Vertical):
 
         # Total
         total = total_image_size + total_container_size + total_volume_size + total_cache
-        lines.append(f"\n  [#79c0ff bold]{'TOTAL DISK USAGE':<22}[/] [#f0f6fc bold]{fmt(total)}[/]")
+        lines.append(f"\n  [#38bdf8 bold]{'TOTAL DISK USAGE':<22}[/] [#f8fafc bold]{fmt(total)}[/]")
 
         self.query_one("#disk-usage", Static).update("\n".join(lines))
 

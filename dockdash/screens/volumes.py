@@ -36,9 +36,9 @@ class VolumesTab(Vertical):
     def compose(self) -> ComposeResult:
         yield SearchBar(id="volume-search")
         yield Static(
-            "[#79c0ff bold]VOLUMES[/]  [#484f58]c[/]=create  "
-            "[#484f58]d[/]=delete  [#484f58]i[/]=inspect  "
-            "[#484f58]/[/]=search",
+            "[#38bdf8 bold] ⯈ VOLUMES [/]  [#38bdf8 bold]c[/][#cbd5e1]=create  "
+            "[#38bdf8 bold]d[/][#cbd5e1]=delete  [#38bdf8 bold]i[/][#cbd5e1]=inspect  "
+            "[#38bdf8 bold]/[/][#cbd5e1]=search",
             classes="actions-bar",
         )
         yield DataTable(id="volume-table", cursor_type="row")

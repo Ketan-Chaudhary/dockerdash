@@ -43,12 +43,12 @@ class ImagesTab(Vertical):
         yield SearchBar(id="image-search")
         yield DataTable(id="image-table", cursor_type="row")
         yield Static(
-            "[#79c0ff bold]IMAGES[/]  [#484f58]p[/]=pull  "
-            "[#484f58]d[/]=delete  [#484f58]t[/]=tag  "
-            "[#484f58]c[/]=create container  "
-            "[#484f58]i[/]=inspect  [#484f58]h[/]=history  "
-            "[#484f58]e[/]=dockerfile editor  "
-            "[#484f58]/[/]=search",
+            "[#38bdf8 bold] ⯈ IMAGES [/]  [#38bdf8 bold]p[/][#cbd5e1]=pull  "
+            "[#38bdf8 bold]d[/][#cbd5e1]=delete  [#38bdf8 bold]t[/][#cbd5e1]=tag  "
+            "[#38bdf8 bold]c[/][#cbd5e1]=create container  "
+            "[#38bdf8 bold]i[/][#cbd5e1]=inspect  [#38bdf8 bold]h[/][#cbd5e1]=history  "
+            "[#38bdf8 bold]e[/][#cbd5e1]=dockerfile editor  "
+            "[#38bdf8 bold]/[/][#cbd5e1]=search",
             classes="actions-bar",
         )
 

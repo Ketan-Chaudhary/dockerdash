@@ -33,20 +33,20 @@ class ContainerCreateDialog(ModalScreen[dict | None]):
     DEFAULT_CSS = """
     ContainerCreateDialog {
         align: center middle;
-        background: #0d1117;
+        background: #0a0e17;
     }
     ContainerCreateDialog .form-container {
         width: 100%;
         height: 100%;
-        background: #0d1117;
+        background: #0a0e17;
     }
     ContainerCreateDialog .form-header {
         height: 1;
-        background: #161b22;
-        color: #79c0ff;
+        background: #121824;
+        color: #38bdf8;
         text-style: bold;
         padding: 0 1;
-        border-bottom: solid #30363d;
+        border-bottom: solid #2b384e;
     }
     ContainerCreateDialog .form-body {
         height: 1fr;
@@ -62,12 +62,12 @@ class ContainerCreateDialog(ModalScreen[dict | None]):
         padding: 0 1;
     }
     ContainerCreateDialog .form-section-title {
-        color: #3fb9a0;
+        color: #38bdf8;
         text-style: bold;
         margin: 1 0 0 0;
     }
     ContainerCreateDialog Label {
-        color: #8b949e;
+        color: #cbd5e1;
         padding: 0;
         margin: 0;
     }
@@ -85,10 +85,10 @@ class ContainerCreateDialog(ModalScreen[dict | None]):
     }
     ContainerCreateDialog .form-footer {
         height: auto;
-        min-height: 3;
-        background: #161b22;
+        min-height: 4;
+        background: #121824;
         padding: 0 2;
-        border-top: solid #30363d;
+        border-top: solid #2b384e;
         layout: horizontal;
         align: right middle;
     }
@@ -105,8 +105,8 @@ class ContainerCreateDialog(ModalScreen[dict | None]):
         with Vertical(classes="form-container"):
             yield Static(
                 "⟨ CREATE CONTAINER ⟩  "
-                "[#8b949e]Keys:[/] [#79c0ff bold]Ctrl+S[/] create  "
-                "[#79c0ff bold]Esc[/] cancel",
+                "[#cbd5e1]Keys:[/] [#38bdf8 bold]Ctrl+S[/] create  "
+                "[#38bdf8 bold]Esc[/] cancel",
                 classes="form-header",
             )
 
