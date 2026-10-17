@@ -243,15 +243,11 @@ class DockerDashApp(App):
         self._refresh_active_tab()
         self.call_later(self._focus_active_tab_content)
 
-    @work(exclusive=True)
-    async def _refresh_active_tab(self) -> None:
-        """Refresh whichever tab is currently active."""
+    async def _do_refresh_active_tab(self) -> None:
+        """Core logic to refresh whichever tab is currently active."""
         if not self._connected:
             return
 
-        import asyncio
-        # Wait for the tab transition animation to finish to avoid lag/stutter
-        await asyncio.sleep(0.3)
         try:
             tabs = self.query_one("#main-tabs", TabbedContent)
             active = tabs.active
@@ -276,11 +272,20 @@ class DockerDashApp(App):
             except Exception as e:
                 self.notify(f"Refresh error: {e}", severity="error")
 
+    @work(exclusive=True)
+    async def _refresh_active_tab(self) -> None:
+        """Refresh whichever tab is currently active with transition delay."""
+        import asyncio
+        # Wait for the tab transition animation to finish to avoid lag/stutter
+        await asyncio.sleep(0.3)
+        await self._do_refresh_active_tab()
+
     # ── Global actions ────────────────────────────────────────────────
 
+    @work(exclusive=True)
     async def action_refresh(self) -> None:
-        """Refresh the current tab's data."""
-        await self._refresh_active_tab()
+        """Refresh the current tab's data immediately."""
+        await self._do_refresh_active_tab()
         self.notify("Refreshed", severity="information")
 
     def action_show_help(self) -> None:

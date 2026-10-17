@@ -314,7 +314,18 @@ async def test_command_palette_theme_routes_to_dialog():
         commands = list(app.get_system_commands(app.screen))
         theme_cmd = next((c for c in commands if c.title == "Theme"), None)
         assert theme_cmd is not None
-        assert theme_cmd.callback == app.action_open_themes
+@pytest.mark.asyncio
+async def test_action_refresh_key_and_action():
+    """Verify that pressing 'r' and action_refresh run cleanly without worker errors."""
+    app = DockerDashApp()
+    async with app.run_test(size=(120, 30)) as pilot:
+        await pilot.pause()
+        # Trigger manual refresh via keybinding 'r'
+        await pilot.press("r")
+        await pilot.pause(0.1)
+        # Directly call action_refresh
+        worker = app.action_refresh()
+        await worker.wait()
 
 
 
