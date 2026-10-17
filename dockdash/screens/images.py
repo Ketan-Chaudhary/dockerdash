@@ -11,6 +11,7 @@ from dockdash.docker_client import DockerClient, DockerClientError
 from dockdash.modals.confirm_dialog import ConfirmDialog
 from dockdash.modals.container_create import ContainerCreateDialog
 from dockdash.modals.dockerfile_editor import DockerfileEditorDialog
+from dockdash.modals.image_layers import ImageLayersDialog
 from dockdash.modals.input_dialog import InputDialog, MultiInputDialog
 from dockdash.modals.inspect_dialog import InspectDialog
 from dockdash.widgets.search_bar import SearchBar
@@ -25,7 +26,8 @@ class ImagesTab(Vertical):
         Binding("t", "tag_image", "Tag", show=True),
         Binding("c", "create_container", "Create Container", show=True),
         Binding("i", "inspect_image", "Inspect", show=True),
-        Binding("h", "image_history", "History", show=True),
+        Binding("l", "image_layers", "Layers", show=True),
+        Binding("h", "image_layers", "History", show=False),
         Binding("e", "edit_dockerfile", "Dockerfile", show=True),
         Binding("slash", "search", "Search", show=False),
         Binding("escape", "exit_search", "Exit Search", show=False),
@@ -46,7 +48,7 @@ class ImagesTab(Vertical):
             "[#38bdf8 bold] ⯈ IMAGES [/]  [#38bdf8 bold]p[/][#cbd5e1]=pull  "
             "[#38bdf8 bold]d[/][#cbd5e1]=delete  [#38bdf8 bold]t[/][#cbd5e1]=tag  "
             "[#38bdf8 bold]c[/][#cbd5e1]=create container  "
-            "[#38bdf8 bold]i[/][#cbd5e1]=inspect  [#38bdf8 bold]h[/][#cbd5e1]=history  "
+            "[#38bdf8 bold]i[/][#cbd5e1]=inspect  [#38bdf8 bold]l[/][#cbd5e1]=layers  "
             "[#38bdf8 bold]e[/][#cbd5e1]=dockerfile editor  "
             "[#38bdf8 bold]/[/][#cbd5e1]=search",
             classes="actions-bar",
@@ -306,20 +308,25 @@ class ImagesTab(Vertical):
         except DockerClientError as e:
             self.notify(str(e), severity="error")
 
-    async def action_image_history(self) -> None:
+    async def action_image_layers(self) -> None:
         image = self._get_selected_image()
         if not image:
             return
         try:
             history = await self._docker.image_history(image["full_id"])
+            image_name = f"{image['repository']}:{image['tag']}"
             self.app.push_screen(
-                InspectDialog(
-                    title=f"History: {image['repository']}:{image['tag']}",
-                    data={"layers": history},
+                ImageLayersDialog(
+                    image_name=image_name,
+                    raw_layers=history,
                 )
             )
         except DockerClientError as e:
             self.notify(str(e), severity="error")
+
+    async def action_image_history(self) -> None:
+        """Alias for action_image_layers."""
+        await self.action_image_layers()
 
     async def action_edit_dockerfile(self) -> None:
         def on_result(result: dict | None) -> None:

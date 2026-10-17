@@ -26,6 +26,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Command palette (`Ctrl+P` / `^p`) Quit action directly exits the application immediately without showing the confirmation dialog.
 - Global `t` keyboard shortcut and Help Dialog entry to open Theme Settings directly.
 - Added numbered shortcut notations to all tab titles for enhanced usability and instant keyboard navigation: `Containers (1)`, `Images (2)`, `Volumes (3)`, `Networks (4)`, `Compose (5)`, `System (6)`.
+- Visual Image Layers Inspector (`ImageLayersDialog` on `l` / `h`):
+  - Dedicated interactive modal showing breakdown of all layers in an image.
+  - Proportional visual ASCII gauge bars and percentage contribution for every layer.
+  - Weight-based color coding highlighting bloated layers (cyan, green, yellow, bold red).
+  - Cleaned Dockerfile instruction parser extracting commands (`RUN`, `COPY`, `ADD`, `ENV`, `CMD`, `ENTRYPOINT`, etc.).
+  - Live command detail inspector pane with keyword syntax coloring and timestamp.
+  - Quick keyboard actions: copy command to clipboard (`c`), toggle order between Base-first and Top-first (`o`), and navigate (`↑/↓`).
 
 ### Fixed
 - Fixed active tab title text clipping where `border-top` on single-line `Tab` widgets consumed the available cell height, leaving only a blue stripe without visible text.

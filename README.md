@@ -216,7 +216,7 @@ DockDash is fully operable via keyboard. Press `?` or `F1` at any time for the c
 | `t` | Tag / rename |
 | `c` | Create container from image |
 | `e` | Open Dockerfile editor |
-| `h` | View layer history |
+| `l` / `h` | Visual image layer inspector & history |
 | `i` | JSON inspect |
 | `d` | Delete image |
 

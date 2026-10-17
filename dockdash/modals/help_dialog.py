@@ -38,7 +38,7 @@ IMAGE_SHORTCUTS = [
     ("t", "Tag / rename image"),
     ("c", "Create container from image"),
     ("i", "Inspect image (JSON)"),
-    ("h", "View image history / layers"),
+    ("l / h", "View visual image layers & history"),
 ]
 
 VOLUME_SHORTCUTS = [
