@@ -38,6 +38,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Presets for Auto-detect (`bash` → `zsh` → `ash` → `sh`), `/bin/bash`, `/bin/sh`, `/bin/zsh`, `/bin/ash`, and custom command execution.
   - Optional custom user/UID field (`-u user`) to attach as `root` or non-root users.
   - Number shortcuts `1` through `6` for instant shell selection, with Enter/Esc submission.
+  - Robust terminal input validation and error handling:
+    - Inline dialog error banner preventing empty commands or invalid user/UID syntax.
+    - Pre-flight daemon verification probing if the requested user exists in the container before suspending the UI.
+    - Error catch on non-zero exit codes (e.g., 126, 127) prompting the user before redrawing, preventing screen wipe.
 - Image Dangling & Unused Quick Filter (`u` toggle and `P` prune on Images tab):
   - Cycle through filter views: `All` → `Dangling (<none>)` → `Unused (no container)` → `All`.
   - Visual styling tags for `<none>` and `<dangling>` images in the image table.

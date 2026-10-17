@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
+import shlex
 import subprocess
 import sys
+import time
 
 from textual import work
 from textual.app import ComposeResult
@@ -395,14 +398,113 @@ class ContainersTab(Vertical):
 
         def on_shell_chosen(result: dict | None) -> None:
             if result:
-                self.app.call_later(
-                    self._do_attach,
-                    container,
-                    result["command"],
-                    result.get("user"),
+                self.run_worker(
+                    self._validate_and_attach(
+                        container,
+                        result["command"],
+                        result.get("user"),
+                        choice=result.get("choice", "auto"),
+                    ),
+                    exclusive=True,
                 )
 
         self.app.push_screen(ShellPickerDialog(container), on_shell_chosen)
+
+    async def _validate_and_attach(
+        self,
+        container: dict,
+        command: list[str],
+        user: str | None = None,
+        choice: str = "auto",
+    ) -> None:
+        cid = container["full_id"]
+        name = container["name"]
+
+        # 1. Verify container is still running
+        try:
+            info = await self._docker.inspect_container(cid)
+            state = info.get("State", {})
+            if not state.get("Running", False):
+                self.notify(
+                    f"Container '{name}' is not running ({state.get('Status', 'stopped')}).",
+                    severity="error",
+                )
+                return
+        except Exception as e:
+            self.notify(f"Container inspection failed: {e}", severity="error")
+            return
+
+        # 2. If user is specified, verify user/UID exists in the container
+        if user:
+            is_numeric = user.isdigit() or (":" in user and all(p.isdigit() for p in user.split(":", 1)))
+            if not is_numeric:
+                try:
+                    probe = await asyncio.to_thread(
+                        subprocess.run,
+                        ["docker", "exec", "-u", user, cid, "sh", "-c", "exit 0"],
+                        capture_output=True,
+                        text=True,
+                        timeout=3,
+                    )
+                    if probe.returncode != 0:
+                        combined_err = (probe.stderr or probe.stdout).strip()
+                        if (
+                            "unable to find user" in combined_err.lower()
+                            or "no matching entries in passwd file" in combined_err.lower()
+                        ):
+                            self.notify(
+                                f"User '{user}' not found in container '{name}'.",
+                                severity="error",
+                                timeout=6,
+                            )
+                            return
+                        elif combined_err:
+                            self.notify(
+                                f"Docker error: {combined_err}",
+                                severity="error",
+                                timeout=6,
+                            )
+                            return
+                except subprocess.TimeoutExpired:
+                    self.notify("Timeout while validating user in container.", severity="warning")
+                except Exception as e:
+                    self.notify(f"User validation error: {e}", severity="error")
+                    return
+
+        # 3. If custom command was specified, verify the executable exists in container
+        if choice == "custom" and command:
+            exe = command[0]
+            try:
+                check_cmd = ["docker", "exec"]
+                if user:
+                    check_cmd.extend(["-u", user])
+                check_cmd.extend([cid, "sh", "-c", f"command -v {shlex.quote(exe)}"])
+                probe_exe = await asyncio.to_thread(
+                    subprocess.run,
+                    check_cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=3,
+                )
+                if probe_exe.returncode != 0:
+                    combined = (probe_exe.stderr or probe_exe.stdout).strip()
+                    if 'exec: "sh"' in combined.lower():
+                        # Container does not have sh; let direct docker exec attempt it
+                        pass
+                    else:
+                        self.notify(
+                            f"Command '{exe}' not found in container '{name}'.",
+                            severity="error",
+                            timeout=6,
+                        )
+                        return
+            except subprocess.TimeoutExpired:
+                pass
+            except Exception:
+                pass
+
+        # 4. Launch interactive terminal session
+        self._do_attach(container, command, user)
 
     def _do_attach(
         self,
@@ -418,6 +520,10 @@ class ContainersTab(Vertical):
         if driver is not None:
             driver.stop_application_mode()
 
+        exit_code = 0
+        error_msg = None
+        duration = 0.0
+
         try:
             user_msg = f" (as user '{user}')" if user else ""
             print(f"\n── Attaching to container '{name}'{user_msg} ──")
@@ -428,19 +534,55 @@ class ContainersTab(Vertical):
             exec_args.append(cid)
             exec_args.extend(command)
 
-            subprocess.run(
+            start_time = time.monotonic()
+            res = subprocess.run(
                 exec_args,
                 stdin=sys.stdin,
                 stdout=sys.stdout,
                 stderr=sys.stderr,
             )
+            duration = time.monotonic() - start_time
+            exit_code = res.returncode
+
+            # If the command failed immediately (e.g. invalid executable, exec failed, daemon error),
+            # give user time to read the error message on terminal before restoring TUI
+            if exit_code not in (0, 130) and duration < 2.0:
+                print(f"\n[DockDash] Terminal command exited with code {exit_code}.")
+                print("── Press Enter to return to DockDash ──")
+                try:
+                    input()
+                except (EOFError, KeyboardInterrupt):
+                    pass
+
         except FileNotFoundError:
-            print("Error: 'docker' command not found in PATH")
+            error_msg = "Error: 'docker' command not found in PATH"
+            print(f"\n{error_msg}")
+            print("── Press Enter to return to DockDash ──")
+            try:
+                input()
+            except (EOFError, KeyboardInterrupt):
+                pass
         except Exception as e:
-            print(f"Error: {e}")
+            error_msg = f"Error: {e}"
+            print(f"\n{error_msg}")
+            print("── Press Enter to return to DockDash ──")
+            try:
+                input()
+            except (EOFError, KeyboardInterrupt):
+                pass
         finally:
             if driver is not None:
                 driver.start_application_mode()
+
+        # Display notification in DockDash UI
+        if error_msg:
+            self.notify(error_msg, severity="error", timeout=6)
+        elif exit_code not in (0, 130) and duration < 2.0:
+            self.notify(
+                f"Terminal command exited with code {exit_code}",
+                severity="error",
+                timeout=5,
+            )
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         """Show detail panel when a row is selected (Enter)."""

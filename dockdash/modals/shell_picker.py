@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import shlex
 from typing import Any
 
@@ -35,7 +36,7 @@ class ShellPickerDialog(ModalScreen[dict[str, Any] | None]):
         width: 82;
         max-width: 96%;
         height: auto;
-        max-height: 22;
+        max-height: 24;
         background: $surface;
         border: solid $primary;
         padding: 1 2;
@@ -54,6 +55,15 @@ class ShellPickerDialog(ModalScreen[dict[str, Any] | None]):
         margin-bottom: 1;
         border-bottom: solid $border;
         padding-bottom: 0;
+    }
+
+    ShellPickerDialog .error-label {
+        color: #f87171;
+        text-style: bold;
+        text-align: center;
+        width: 100%;
+        margin-bottom: 1;
+        display: none;
     }
 
     ShellPickerDialog .picker-body {
@@ -143,6 +153,7 @@ class ShellPickerDialog(ModalScreen[dict[str, Any] | None]):
                 f"[#f8fafc bold]{name}[/]  [#38bdf8]({image})[/]  [#94a3b8][{cid}][/]",
                 classes="container-info",
             )
+            yield Label("", id="picker-error", classes="error-label")
 
             with Horizontal(classes="picker-body"):
                 with Vertical(classes="picker-col-left"):
@@ -171,6 +182,23 @@ class ShellPickerDialog(ModalScreen[dict[str, Any] | None]):
                     with Horizontal(classes="picker-buttons"):
                         yield Button("Cancel [Esc]", variant="default", id="btn-cancel")
                         yield Button("Attach [Enter]", variant="primary", id="btn-attach")
+
+    def _show_error(self, message: str) -> None:
+        try:
+            lbl = self.query_one("#picker-error", Label)
+            lbl.update(f"⚠ {message}")
+            lbl.styles.display = "block"
+        except Exception:
+            self.notify(message, severity="error")
+
+    def _clear_error(self) -> None:
+        try:
+            lbl = self.query_one("#picker-error", Label)
+            lbl.update("")
+            lbl.styles.display = "none"
+        except Exception:
+            pass
+
 
     def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
         radio_id = event.pressed.id or ""
@@ -232,7 +260,15 @@ class ShellPickerDialog(ModalScreen[dict[str, Any] | None]):
         self.dismiss(None)
 
     def _submit(self) -> None:
+        self._clear_error()
         user_val = self.query_one("#user-input", Input).value.strip() or None
+
+        # Validate user / UID format
+        if user_val:
+            if not re.match(r"^[a-zA-Z0-9_.\-]+(?::[a-zA-Z0-9_.\-]+)?$", user_val):
+                self._show_error("Invalid User/UID format. Use 'user', 'uid', or 'user:group'.")
+                self.query_one("#user-input", Input).focus()
+                return
 
         if self._selected_choice == "auto":
             command = [
@@ -254,9 +290,19 @@ class ShellPickerDialog(ModalScreen[dict[str, Any] | None]):
         elif self._selected_choice == "custom":
             custom_val = self.query_one("#custom-command-input", Input).value.strip()
             if not custom_val:
-                command = ["/bin/sh"]
-            else:
+                self._show_error("Please enter a custom command to execute.")
+                self.query_one("#custom-command-input", Input).focus()
+                return
+            try:
                 command = shlex.split(custom_val)
+            except ValueError as e:
+                self._show_error(f"Invalid command syntax: {e}")
+                self.query_one("#custom-command-input", Input).focus()
+                return
+            if not command:
+                self._show_error("Please enter a custom command to execute.")
+                self.query_one("#custom-command-input", Input).focus()
+                return
         else:
             command = ["/bin/sh"]
 
