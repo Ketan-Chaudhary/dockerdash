@@ -1,199 +1,209 @@
 /* ─────────────────────────────────────────────────────────────────
-   DockDash — Dark Theme Stylesheet
-   Professional Docker Dashboard with sharp, technical aesthetics
+   DockDash — Dynamic High-Contrast Theme System
+   Adapts to all color templates: Cyber Slate, Tokyo Night, Dracula,
+   Nord, Catppuccin, Monokai, Gruvbox, Synthwave, Solarized Dark.
    ───────────────────────────────────────────────────────────────── */
-
-/* ── Color Palette ──
-   Background:     #0d1117 (deep space dark)
-   Surface:        #161b22 (elevated panel)
-   Surface-alt:    #1c2333 (active/hover card)
-   Border:         #30363d (subtle divider)
-   Border-focus:   #58a6ff (accent blue)
-   Text Primary:   #f0f6fc (crisp white)
-   Text Secondary: #8b949e (silver gray)
-   Text Muted:     #484f58 (dim gray)
-   Accent Blue:    #58a6ff
-   Accent Cyan:    #79c0ff
-   Accent Green:   #3fb950
-   Accent Red:     #f85149
-   Accent Amber:   #d29922
-*/
 
 /* ── Global ────────────────────────────────────────────────────── */
 
 Screen {
-    background: #0d1117;
-    color: #f0f6fc;
+    background: $background;
+    color: $foreground;
 }
 
 /* ── Header & Footer ──────────────────────────────────────────── */
 
 Header {
-    background: #161b22;
-    color: #58a6ff;
+    background: $surface;
+    color: $primary;
     dock: top;
+    text-style: bold;
 }
 
 Footer {
-    background: #161b22;
-    color: #8b949e;
+    background: $surface;
+    color: $text-muted;
     dock: bottom;
+    height: 1;
 }
 
 FooterKey {
-    background: #161b22;
-    color: #58a6ff;
+    background: $surface;
+    color: $primary;
 }
 
 FooterKey .footer-key--key {
-    background: #1c2333;
-    color: #79c0ff;
+    background: $panel;
+    color: $primary;
     text-style: bold;
 }
 
 FooterKey .footer-key--description {
-    color: #8b949e;
+    color: $text;
+    background: $surface;
+}
+
+FooterKey:hover {
+    background: $panel;
+}
+
+FooterKey:hover .footer-key--description {
+    color: $foreground;
+}
+
+FooterLabel {
+    color: $text-muted;
+    background: $surface;
 }
 
 /* ── TabbedContent & Tabs ──────────────────────────────────────── */
 
 TabbedContent {
-    background: #0d1117;
+    background: $background;
 }
 
 Tabs {
-    background: #161b22;
+    background: $surface;
     dock: top;
     height: 3;
-    border-bottom: solid #30363d;
+    border-bottom: solid $border;
 }
 
 Tab {
-    background: #161b22;
-    color: #8b949e;
-    padding: 0 3;
+    background: $surface;
+    color: $text-muted;
+    padding: 0 2;
     margin: 0 1;
-}
-
-Tab:hover {
-    background: #1c2333;
-    color: #f0f6fc;
-}
-
-Tab.-active {
-    background: #1f6feb;
-    color: #ffffff;
     text-style: bold;
 }
 
-Tab.-active:hover {
-    background: #388bfd;
-    color: #ffffff;
+Tab:hover {
+    background: $panel;
+    color: $foreground;
+}
+
+Tabs .-active,
+Tabs:focus .-active,
+Tab.-active,
+Tab.-active:hover,
+Tabs:focus Tab.-active {
+    background: $primary;
+    color: $background;
+    text-style: bold;
 }
 
 Underline {
-    color: #58a6ff;
+    color: $primary;
+}
+
+.underline--bar {
+    background: $primary;
 }
 
 TabPane {
-    background: #0d1117;
+    background: $background;
     padding: 1 1;
 }
 
 /* ── DataTable ─────────────────────────────────────────────────── */
 
 DataTable {
-    background: #0d1117;
+    background: $background;
     height: 1fr;
-    scrollbar-background: #161b22;
-    scrollbar-color: #30363d;
-    scrollbar-color-active: #58a6ff;
-    scrollbar-color-hover: #484f58;
+    border: solid $border;
+    scrollbar-background: $surface;
+    scrollbar-color: $border;
+    scrollbar-color-active: $primary;
+    scrollbar-color-hover: $panel-lighten-1;
 }
 
 DataTable > .datatable--header {
-    background: #161b22;
-    color: #79c0ff;
+    background: $panel;
+    color: $primary;
     text-style: bold;
+    border-bottom: solid $border;
 }
 
 DataTable > .datatable--cursor {
-    background: #1c2333;
-    color: #f0f6fc;
+    background: $secondary;
+    color: $foreground;
     text-style: bold;
 }
 
 DataTable > .datatable--header-cursor {
-    background: #161b22;
-    color: #79c0ff;
+    background: $panel;
+    color: $accent;
     text-style: bold;
 }
 
 DataTable > .datatable--hover {
-    background: #161b2280;
+    background: $panel-lighten-1;
 }
 
 DataTable:focus > .datatable--cursor {
-    background: #1c2333;
-    color: #ffffff;
+    background: $primary;
+    color: $background;
+    text-style: bold;
 }
 
 /* ── Status Label Colors ───────────────────────────────────────── */
 
 .status-running {
-    color: #3fb950;
+    color: $success;
     text-style: bold;
 }
 
 .status-exited {
-    color: #f85149;
+    color: $error;
+    text-style: bold;
 }
 
 .status-paused {
-    color: #d29922;
-    text-style: italic;
+    color: $warning;
+    text-style: italic bold;
 }
 
 .status-created {
-    color: #58a6ff;
+    color: $secondary;
+    text-style: bold;
 }
 
 .status-restarting {
-    color: #db6d28;
+    color: $warning-lighten-1;
     text-style: bold;
 }
 
 .status-removing {
-    color: #484f58;
+    color: $text-muted;
 }
 
 .status-dead {
-    color: #f85149;
+    color: $error-lighten-1;
     text-style: bold;
 }
 
 .status-unknown {
-    color: #8b949e;
+    color: $text-muted;
 }
 
 /* ── Panels & Cards ────────────────────────────────────────────── */
 
 .panel {
-    background: #161b22;
-    border: solid #30363d;
+    background: $surface;
+    border: solid $border;
     padding: 1 2;
     margin: 0 0 1 0;
 }
 
 .panel-title {
-    color: #79c0ff;
+    color: $primary;
     text-style: bold;
     padding: 0 0 1 0;
 }
 
 .card {
-    background: #1c2333;
-    border: solid #30363d;
+    background: $panel;
+    border: solid $border;
     padding: 1 2;
     margin: 0 1 1 0;
 }
@@ -201,163 +211,174 @@ DataTable:focus > .datatable--cursor {
 /* ── Buttons ───────────────────────────────────────────────────── */
 
 Button {
-    background: #1c2333;
-    color: #f0f6fc;
-    border: solid #30363d;
+    background: $panel;
+    color: $foreground;
+    text-style: bold;
+    border: solid $border;
     min-width: 14;
     height: 3;
+    padding: 0 2;
     margin: 0 1;
 }
 
 Button:hover {
-    background: #30363d;
-    color: #ffffff;
-    border: solid #58a6ff;
+    background: $panel-lighten-1;
+    color: $foreground;
+    border: solid $primary;
 }
 
 Button:focus {
-    background: #58a6ff;
-    color: #0d1117;
+    background: $primary-darken-1;
+    color: $foreground;
     text-style: bold;
-    border: solid #ffffff;
+    border: solid $primary-lighten-1;
 }
 
 Button.-primary {
-    background: #1f6feb;
-    color: #ffffff;
-    border: solid #388bfd;
+    background: $primary;
+    color: $background;
+    text-style: bold;
+    border: solid $primary-lighten-1;
 }
 
 Button.-primary:hover {
-    background: #388bfd;
+    background: $primary-darken-1;
+    border: solid $primary-lighten-2;
 }
 
 Button.-primary:focus {
-    background: #79c0ff;
-    color: #0d1117;
+    background: $primary-lighten-1;
+    color: $background;
     text-style: bold;
-    border: solid #ffffff;
+    border: solid $foreground;
 }
 
 Button.-error {
-    background: #8b1a1a;
-    color: #f85149;
-    border: solid #f85149;
+    background: $error;
+    color: $foreground;
+    text-style: bold;
+    border: solid $error-lighten-1;
 }
 
 Button.-error:hover {
-    background: #a32828;
+    background: $error-lighten-1;
+    border: solid $error-lighten-2;
 }
 
 Button.-error:focus {
-    background: #f85149;
-    color: #ffffff;
+    background: $error-lighten-2;
+    color: $background;
     text-style: bold;
-    border: solid #ffffff;
+    border: solid $foreground;
 }
 
 Button.-success {
-    background: #1a4d2e;
-    color: #3fb950;
-    border: solid #3fb950;
+    background: $success;
+    color: $background;
+    text-style: bold;
+    border: solid $success-lighten-1;
 }
 
 Button.-success:hover {
-    background: #238636;
+    background: $success-darken-1;
+    border: solid $success-lighten-2;
 }
 
 Button.-success:focus {
-    background: #3fb950;
-    color: #0d1117;
+    background: $success-lighten-1;
+    color: $background;
     text-style: bold;
-    border: solid #ffffff;
+    border: solid $foreground;
 }
 
 Button.-warning {
-    background: #4d3a1a;
-    color: #d29922;
-    border: solid #d29922;
+    background: $warning;
+    color: $background;
+    text-style: bold;
+    border: solid $warning-lighten-1;
 }
 
 Button.-warning:hover {
-    background: #6e5020;
+    background: $warning-darken-1;
+    border: solid $warning-lighten-2;
+    color: $background;
 }
 
 Button.-warning:focus {
-    background: #d29922;
-    color: #0d1117;
+    background: $warning-lighten-1;
+    color: $background;
     text-style: bold;
-    border: solid #ffffff;
+    border: solid $foreground;
 }
 
 /* ── Form Inputs ───────────────────────────────────────────────── */
 
 Input {
-    background: #0d1117;
-    color: #f0f6fc;
-    border: solid #30363d;
+    background: $surface;
+    color: $foreground;
+    border: solid $border;
     padding: 0 1;
 }
 
 Input:focus {
-    border: solid #58a6ff;
+    border: solid $primary;
 }
 
 Input.-invalid {
-    border: solid #f85149;
+    border: solid $error;
 }
 
 Label {
-    color: #8b949e;
+    color: $text;
     padding: 1 0 0 0;
 }
 
 Select {
-    background: #0d1117;
-    color: #f0f6fc;
-    border: solid #30363d;
+    background: $surface;
+    color: $foreground;
+    border: solid $border;
 }
 
 Select:focus {
-    border: solid #58a6ff;
+    border: solid $primary;
 }
 
 SelectOverlay {
-    background: #161b22;
-    border: solid #30363d;
+    background: $surface;
+    border: solid $primary;
 }
 
 Switch {
-    background: #30363d;
+    background: $border;
 }
 
 Switch.-on {
-    background: #1f6feb;
+    background: $primary;
 }
 
 /* ── TextArea / Code Editor ────────────────────────────────────── */
 
 TextArea {
-    background: #0d1117;
-    color: #f0f6fc;
-    border: solid #30363d;
+    background: $surface;
+    color: $foreground;
+    border: solid $border;
     height: 1fr;
 }
 
 TextArea:focus {
-    border: solid #58a6ff;
+    border: solid $primary;
 }
 
 /* ── RichLog ───────────────────────────────────────────────────── */
 
 RichLog {
-    background: #0d1117;
-    color: #f0f6fc;
-    border: solid #30363d;
-    scrollbar-background: #161b22;
-    scrollbar-color: #30363d;
-    scrollbar-color-active: #58a6ff;
-    scrollbar-color-hover: #484f58;
+    background: $background;
+    color: $foreground;
+    border: solid $border;
+    scrollbar-background: $surface;
+    scrollbar-color: $border;
+    scrollbar-color-active: $primary;
+    scrollbar-color-hover: $panel-lighten-1;
     height: 1fr;
     padding: 0 1;
 }
@@ -365,27 +386,30 @@ RichLog {
 /* ── Text Helpers ──────────────────────────────────────────────── */
 
 .text-accent {
-    color: #58a6ff;
+    color: $primary;
 }
 
 .text-teal {
-    color: #3fb9a0;
+    color: $accent;
 }
 
 .text-muted {
-    color: #8b949e;
+    color: $text-muted;
 }
 
 .text-error {
-    color: #f85149;
+    color: $error;
+    text-style: bold;
 }
 
 .text-success {
-    color: #3fb950;
+    color: $success;
+    text-style: bold;
 }
 
 .text-warning {
-    color: #d29922;
+    color: $warning;
+    text-style: bold;
 }
 
 .text-bold {
@@ -396,23 +420,35 @@ RichLog {
 
 ModalScreen {
     align: center middle;
-    background: #0d1117b3;
+    background: $background 80%;
 }
 
 .modal-dialog {
-    background: #161b22;
-    border: solid #30363d;
+    background: $surface;
+    border: solid $primary;
     padding: 1 2;
     width: 80;
-    max-height: 80%;
+    max-height: 85%;
+}
+
+.modal-dialog.-danger {
+    border: solid $error;
 }
 
 .modal-title {
-    color: #79c0ff;
+    background: $panel;
+    color: $primary;
     text-style: bold;
     text-align: center;
     padding: 1 0;
     width: 100%;
+    border-bottom: solid $border;
+    margin-bottom: 1;
+}
+
+.modal-dialog.-danger .modal-title {
+    color: $error;
+    border-bottom: solid $error;
 }
 
 .modal-body {
@@ -422,15 +458,78 @@ ModalScreen {
 .modal-footer {
     layout: horizontal;
     height: auto;
+    min-height: 4;
     align: right middle;
     padding: 1 0 0 0;
+    border-top: solid $border;
+    margin-top: 1;
+}
+
+/* ── Exit Dialog ───────────────────────────────────────────────── */
+
+.exit-dialog {
+    width: 44;
+    height: auto;
+    border: solid $primary;
+    padding: 1 2;
+}
+
+.exit-buttons {
+    layout: vertical;
+    width: 100%;
+    height: auto;
+    align: center middle;
+    padding: 1 0 0 0;
+}
+
+.exit-buttons Button {
+    width: 100%;
+    margin: 0 0 1 0;
+    height: 3;
+}
+
+/* ── Theme Settings Dialog ─────────────────────────────────────── */
+
+.theme-dialog {
+    width: 82;
+    max-height: 85%;
+    border: solid $primary;
+}
+
+.theme-body {
+    padding: 1 1;
+}
+
+.theme-help-text {
+    padding: 0 1 1 1;
+}
+
+.theme-option-list {
+    height: 14;
+    background: $surface;
+    border: solid $border;
+}
+
+.theme-option-list > .option-list--option {
+    padding: 0 1;
+}
+
+.theme-option-list > .option-list--option-highlighted {
+    background: $panel;
+    color: $foreground;
+    text-style: bold;
+}
+
+.theme-footer {
+    align: right middle;
+    border-top: solid $border;
 }
 
 /* ── Connection Error Panel ────────────────────────────────────── */
 
 .error-panel {
-    background: #161b22;
-    border: solid #f85149;
+    background: $surface;
+    border: solid $error;
     padding: 2 4;
     width: 60;
     height: auto;
@@ -439,14 +538,14 @@ ModalScreen {
 }
 
 .error-title {
-    color: #f85149;
+    color: $error;
     text-style: bold;
     text-align: center;
     width: 100%;
 }
 
 .error-message {
-    color: #8b949e;
+    color: $foreground;
     text-align: center;
     padding: 1 0;
     width: 100%;
@@ -462,13 +561,13 @@ ModalScreen {
 }
 
 .detail-label {
-    color: #8b949e;
+    color: $text-muted;
     text-style: bold;
     width: auto;
 }
 
 .detail-value {
-    color: #f0f6fc;
+    color: $foreground;
     width: 1fr;
 }
 
@@ -479,12 +578,12 @@ ProgressBar {
 }
 
 ProgressBar Bar {
-    color: #1f6feb;
-    background: #30363d;
+    color: $primary;
+    background: $border;
 }
 
 ProgressBar PercentageStatus {
-    color: #8b949e;
+    color: $text-muted;
     text-style: bold;
 }
 
@@ -496,23 +595,23 @@ ProgressBar PercentageStatus {
 }
 
 .stat-label {
-    color: #79c0ff;
+    color: $primary;
     width: 12;
     text-style: bold;
 }
 
 .stat-value {
-    color: #f0f6fc;
+    color: $foreground;
     width: 1fr;
 }
 
 /* ── Scrollbars ────────────────────────────────────────────────── */
 
 * {
-    scrollbar-background: #161b22;
-    scrollbar-color: #30363d;
-    scrollbar-color-hover: #484f58;
-    scrollbar-color-active: #58a6ff;
+    scrollbar-background: $surface;
+    scrollbar-color: $border;
+    scrollbar-color-hover: $panel-lighten-1;
+    scrollbar-color-active: $primary;
     scrollbar-size-vertical: 1;
 }
 
@@ -521,8 +620,8 @@ ProgressBar PercentageStatus {
 SearchBar {
     dock: top;
     height: 3;
-    background: #161b22;
-    border: solid #388bfd;
+    background: $surface;
+    border: solid $primary;
     padding: 0 1;
     layout: horizontal;
     display: none;
@@ -536,7 +635,7 @@ SearchBar.-visible {
 SearchBar .search-icon {
     width: auto;
     height: 1;
-    color: #58a6ff;
+    color: $primary;
     text-style: bold;
     margin: 0 1 0 0;
 }
@@ -546,6 +645,7 @@ SearchBar Input {
     height: 1;
     border: none;
     background: transparent;
+    color: $foreground;
     padding: 0;
 }
 
@@ -553,22 +653,21 @@ SearchBar Input:focus {
     border: none;
 }
 
-
 /* ── Tab Actions Bar ───────────────────────────────────────────── */
 
 .actions-bar {
     dock: bottom;
     height: 1;
-    background: #161b22;
-    color: #8b949e;
+    background: $surface;
+    color: $text-muted;
     padding: 0 1;
 }
 
 .action-key {
-    color: #79c0ff;
+    color: $primary;
     text-style: bold;
 }
 
 .action-label {
-    color: #8b949e;
+    color: $text-muted;
 }

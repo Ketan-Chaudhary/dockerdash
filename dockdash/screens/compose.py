@@ -44,11 +44,11 @@ class ComposeTab(Vertical):
     def compose(self) -> ComposeResult:
         yield SearchBar(id="compose-search")
         yield Static(
-            "[#79c0ff bold]COMPOSE STACKS[/]  [#484f58]u[/]=up  "
-            "[#484f58]d[/]=down  [#484f58]s[/]=start  "
-            "[#484f58]S[/]=stop  [#484f58]R[/]=restart  "
-            "[#484f58]l[/]=logs  [#484f58]e[/]=edit file  "
-            "[#484f58]p[/]=pull  [#484f58]/[/]=search",
+            "[#38bdf8 bold] ⯈ COMPOSE STACKS [/]  [#38bdf8 bold]u[/][#cbd5e1]=up  "
+            "[#38bdf8 bold]d[/][#cbd5e1]=down  [#38bdf8 bold]s[/][#cbd5e1]=start  "
+            "[#38bdf8 bold]S[/][#cbd5e1]=stop  [#38bdf8 bold]R[/][#cbd5e1]=restart  "
+            "[#38bdf8 bold]l[/][#cbd5e1]=logs  [#38bdf8 bold]e[/][#cbd5e1]=edit file  "
+            "[#38bdf8 bold]p[/][#cbd5e1]=pull  [#38bdf8 bold]/[/][#cbd5e1]=search",
             classes="actions-bar",
         )
         with Horizontal(id="compose-layout"):
@@ -160,24 +160,24 @@ class ComposeTab(Vertical):
             return
 
         detail = self.query_one("#compose-services-detail", Static)
-        lines = [f"[#79c0ff bold]Stack:[/] [#f0f6fc]{proj['name']}[/]\n"]
+        lines = [f"[#38bdf8 bold]Stack:[/] [#f8fafc]{proj['name']}[/]\n"]
 
         services = proj.get("services", [])
         if services:
-            lines.append("[#3fb9a0 bold]━━ Services ━━[/]\n")
+            lines.append("[#38bdf8 bold]━━ Services ━━[/]\n")
             for s in services:
-                st_color = "#3fb950" if s["status"] == "running" else "#f85149"
+                st_color = "#34d399" if s["status"] == "running" else "#f87171"
                 lines.append(
-                    f"  [{st_color} bold]•[/] [#f0f6fc bold]{s['name']}[/]  "
-                    f"[#8b949e]({s['container_name']})[/]"
+                    f"  [{st_color} bold]•[/] [#f8fafc bold]{s['name']}[/]  "
+                    f"[#cbd5e1]({s['container_name']})[/]"
                 )
-                lines.append(f"    [#8b949e]Image:[/] {s['image']}")
-                lines.append(f"    [#8b949e]Status:[/] {s['status']}  [#8b949e]Ports:[/] {s['ports']}")
+                lines.append(f"    [#94a3b8]Image:[/] [#f8fafc]{s['image']}[/]")
+                lines.append(f"    [#94a3b8]Status:[/] [{st_color}]{s['status']}[/]  [#94a3b8]Ports:[/] [#f8fafc]{s['ports']}[/]")
                 lines.append("")
         else:
-            lines.append("[#8b949e italic]No containers currently running for this stack.[/]\n")
+            lines.append("[#94a3b8 italic]No containers currently running for this stack.[/]\n")
             if proj.get("config_file"):
-                lines.append("[#79c0ff]Press [#f0f6fc bold]u[/] to run [#f0f6fc bold]docker compose up -d[/][/]")
+                lines.append("[#38bdf8]Press [#f8fafc bold]u[/] to run [#f8fafc bold]docker compose up -d[/][/]")
 
         detail.update("\n".join(lines))
 

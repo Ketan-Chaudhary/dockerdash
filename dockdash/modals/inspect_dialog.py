@@ -21,21 +21,21 @@ class InspectDialog(ModalScreen[None]):
     DEFAULT_CSS = """
     InspectDialog {
         align: center middle;
-        background: #0d1117ee;
+        background: #0a0e17ee;
     }
     InspectDialog .inspect-container {
         width: 100%;
         height: 100%;
-        background: #0d1117;
-        border: solid #30363d;
+        background: #0a0e17;
+        border: solid #2b384e;
     }
     InspectDialog .inspect-header {
         height: 1;
-        background: #161b22;
-        color: #79c0ff;
+        background: #121824;
+        color: #38bdf8;
         text-style: bold;
         padding: 0 1;
-        border-bottom: solid #30363d;
+        border-bottom: solid #2b384e;
     }
     InspectDialog TextArea {
         height: 1fr;
@@ -53,8 +53,8 @@ class InspectDialog(ModalScreen[None]):
         with Vertical(classes="inspect-container"):
             yield Static(
                 f"⟨ INSPECT ⟩  {self._title}  "
-                f"[#484f58]Press [#79c0ff bold]Esc[/][#484f58] or [/]"
-                f"[#79c0ff bold]q[/][#484f58] to close[/]",
+                f"[#cbd5e1]Press [#38bdf8 bold]Esc[/][#cbd5e1] or [/]"
+                f"[#38bdf8 bold]q[/][#cbd5e1] to close[/]",
                 classes="inspect-header",
             )
             try:

@@ -66,7 +66,7 @@ cd dockerdash && pip install -e . && dockdash
 ### General
 - **Keyboard-first** — Every action is one or two keystrokes away
 - **Live search & filtering** — Press `/` on any tab to instantly filter results
-- **High-contrast dark theme** — Glowing focus highlights, status badges, and smooth tab transitions
+- **Curated color templates & themes** — Choose from 9 palettes (Cyber Slate, Tokyo Night, Dracula, Nord, Catppuccin, Monokai, Gruvbox, Synthwave, Solarized) with real-time live preview and persistent settings
 - **Cross-platform** — Linux, macOS, and Windows (standalone binaries available)
 
 ---
@@ -172,10 +172,11 @@ DockDash is fully operable via keyboard. Press `?` or `F1` at any time for the c
 | Key | Action |
 | :---: | :--- |
 | `1` – `6` | Switch tabs (Containers / Images / Volumes / Networks / Compose / System) |
+| `t` | Open color templates & theme settings |
 | `r` / `F5` | Refresh current tab |
 | `/` | Open search & filter bar |
 | `?` / `F1` | Open keyboard shortcuts help |
-| `q` / `Ctrl+C` | Quit |
+| `q` / `Ctrl+C` | Exit dialog (Quit / Themes / Cancel) |
 | `Esc` | Close active dialog, filter, or modal |
 
 ### Containers (`1`)

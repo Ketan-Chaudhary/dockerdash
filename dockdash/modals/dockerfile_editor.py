@@ -55,33 +55,34 @@ class DockerfileEditorDialog(ModalScreen[dict | None]):
     DEFAULT_CSS = """
     DockerfileEditorDialog {
         align: center middle;
-        background: #0d1117ee;
+        background: #0a0e17ee;
     }
     DockerfileEditorDialog .editor-container {
         width: 100%;
         height: 100%;
-        background: #0d1117;
-        border: solid #30363d;
+        background: #0a0e17;
+        border: solid #2b384e;
         padding: 0;
     }
     DockerfileEditorDialog .editor-header {
         height: 1;
-        background: #161b22;
-        color: #79c0ff;
+        background: #121824;
+        color: #38bdf8;
         text-style: bold;
         padding: 0 1;
-        border-bottom: solid #30363d;
+        border-bottom: solid #2b384e;
     }
     DockerfileEditorDialog .editor-top-bar {
         height: 3;
-        background: #161b22;
+        background: #121824;
         padding: 0 1;
-        border-bottom: solid #30363d;
+        border-bottom: solid #2b384e;
         layout: horizontal;
     }
     DockerfileEditorDialog .editor-top-bar Label {
         padding: 1 1 0 0;
         width: auto;
+        color: #cbd5e1;
     }
     DockerfileEditorDialog .editor-top-bar Input {
         width: 1fr;
@@ -92,10 +93,10 @@ class DockerfileEditorDialog(ModalScreen[dict | None]):
     }
     DockerfileEditorDialog .editor-bottom-bar {
         height: auto;
-        min-height: 3;
-        background: #161b22;
+        min-height: 4;
+        background: #121824;
         padding: 0 1;
-        border-top: solid #30363d;
+        border-top: solid #2b384e;
         layout: horizontal;
         align: right middle;
     }
@@ -105,6 +106,7 @@ class DockerfileEditorDialog(ModalScreen[dict | None]):
     DockerfileEditorDialog .editor-bottom-bar Label {
         padding: 1 1 0 0;
         width: auto;
+        color: #cbd5e1;
     }
     DockerfileEditorDialog .editor-bottom-bar Button {
         margin: 0 0 0 1;
@@ -128,8 +130,8 @@ class DockerfileEditorDialog(ModalScreen[dict | None]):
         with Vertical(classes="editor-container"):
             yield Static(
                 "⟨ DOCKERFILE EDITOR ⟩  "
-                "[#484f58]Ctrl+S[/][#8b949e]=save  [/]"
-                "[#484f58]Esc[/][#8b949e]=close[/]",
+                "[#38bdf8 bold]Ctrl+S[/][#cbd5e1]=save  [/]"
+                "[#38bdf8 bold]Esc[/][#cbd5e1]=close[/]",
                 classes="editor-header",
             )
 

@@ -50,12 +50,12 @@ class ContainersTab(Vertical):
     def compose(self) -> ComposeResult:
         yield SearchBar(id="container-search")
         yield Static(
-            "[#79c0ff bold]CONTAINERS[/]  [#484f58]s[/]=start  "
-            "[#484f58]S[/]=stop  [#484f58]R[/]=restart  "
-            "[#484f58]d[/]=delete  [#484f58]l[/]=logs  "
-            "[#484f58]i[/]=inspect  [#484f58]t[/]=terminal  "
-            "[#484f58]a[/]=stats  [#484f58]n[/]=rename  "
-            "[#484f58]/[/]=search",
+            "[#38bdf8 bold] ⯈ CONTAINERS [/]  [#38bdf8 bold]s[/][#cbd5e1]=start  "
+            "[#38bdf8 bold]S[/][#cbd5e1]=stop  [#38bdf8 bold]R[/][#cbd5e1]=restart  "
+            "[#38bdf8 bold]d[/][#cbd5e1]=delete  [#38bdf8 bold]l[/][#cbd5e1]=logs  "
+            "[#38bdf8 bold]i[/][#cbd5e1]=inspect  [#38bdf8 bold]t[/][#cbd5e1]=terminal  "
+            "[#38bdf8 bold]a[/][#cbd5e1]=stats  [#38bdf8 bold]n[/][#cbd5e1]=rename  "
+            "[#38bdf8 bold]/[/][#cbd5e1]=search",
             classes="actions-bar",
         )
         with Horizontal(id="container-layout"):
@@ -102,16 +102,16 @@ class ContainersTab(Vertical):
             for c in self._filtered:
                 status_text, status_class = DockerClient.format_status(c["status"])
                 status_colors = {
-                    "status-running": "#3fb950",
-                    "status-exited": "#f85149",
-                    "status-paused": "#d29922",
-                    "status-created": "#58a6ff",
-                    "status-restarting": "#db6d28",
-                    "status-removing": "#484f58",
-                    "status-dead": "#f85149",
-                    "status-unknown": "#8b949e",
+                    "status-running": "#34d399",
+                    "status-exited": "#f87171",
+                    "status-paused": "#fbbf24",
+                    "status-created": "#60a5fa",
+                    "status-restarting": "#fb923c",
+                    "status-removing": "#94a3b8",
+                    "status-dead": "#ef4444",
+                    "status-unknown": "#cbd5e1",
                 }
-                color = status_colors.get(status_class, "#8b949e")
+                color = status_colors.get(status_class, "#cbd5e1")
 
                 row_data = (
                     f"[{color} bold]{status_text}[/]",

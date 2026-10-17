@@ -129,3 +129,192 @@ async def test_image_search_enter_and_escape():
         assert not search_bar.visible_search
         assert len(tab._filtered) == 2
 
+
+@pytest.mark.asyncio
+async def test_footer_tab_and_actions_bar_visibility():
+    """Verify that active tab title, footer keys, and actions bar are visible and on-screen."""
+    from textual.widgets import Footer
+
+    app = DockerDashApp()
+    app._connected = True
+    async with app.run_test(size=(120, 30)) as pilot:
+        await pilot.pause()
+
+        # 1. Active tab title must be rendered with non-zero height
+        tab = app.query_one("Tab.-active")
+        assert tab.content_size.height == 1
+        assert "Containers" in str(tab.render())
+
+        # 2. Footer keys must be within visible screen height (y < 30)
+        footer = app.query_one(Footer)
+        assert footer.size.height == 1
+        for child in footer.children:
+            assert child.region.y < 30
+
+        # 3. Actions bar must have non-zero content height
+        bar = app.query_one(".actions-bar")
+        assert bar.content_size.height == 1
+        assert "CONTAINERS" in str(bar.render())
+
+
+@pytest.mark.asyncio
+async def test_tab_titles_have_number_notations():
+    """Verify that all tabs display the expected name and number notation (1-6)."""
+    from textual.widgets import Tab
+
+    app = DockerDashApp()
+    app._connected = True
+    async with app.run_test(size=(120, 30)) as pilot:
+        await pilot.pause()
+        tab_labels = [t.label.plain for t in app.query(Tab)]
+        expected = [
+            "Containers (1)",
+            "Images (2)",
+            "Volumes (3)",
+            "Networks (4)",
+            "Compose (5)",
+            "System (6)",
+        ]
+        assert tab_labels == expected
+
+
+@pytest.mark.asyncio
+async def test_exit_dialog_cancel():
+    """Verify that action_quit shows ExitDialog and Escape cancels."""
+    app = DockerDashApp()
+    async with app.run_test(size=(120, 30)) as pilot:
+        await pilot.pause()
+        app.action_quit()
+        await pilot.pause()
+        assert app.screen.__class__.__name__ == "ExitDialog"
+
+        # Cancel with Escape
+        await pilot.press("escape")
+        await pilot.pause()
+        assert app.screen.__class__.__name__ != "ExitDialog"
+
+
+@pytest.mark.asyncio
+async def test_exit_dialog_opens_theme_settings():
+    """Verify that pressing 's' in ExitDialog transitions to ThemeDialog."""
+    app = DockerDashApp()
+    async with app.run_test(size=(120, 30)) as pilot:
+        await pilot.pause()
+        app.action_quit()
+        await pilot.pause()
+        assert app.screen.__class__.__name__ == "ExitDialog"
+
+        # Press 's' to choose Theme Settings
+        await pilot.press("s")
+        await pilot.pause()
+        assert app.screen.__class__.__name__ == "ThemeDialog"
+
+        # Cancel theme dialog
+        await pilot.press("escape")
+        await pilot.pause()
+        assert app.screen.__class__.__name__ != "ThemeDialog"
+
+
+@pytest.mark.asyncio
+async def test_theme_dialog_reverts_on_cancel():
+    """Verify that cancelling ThemeDialog reverts the previewed theme."""
+    from dockdash.modals.theme_dialog import ThemeDialog
+
+    app = DockerDashApp()
+    async with app.run_test(size=(120, 30)) as pilot:
+        await pilot.pause()
+        orig_theme = app.theme
+
+        app.push_screen(ThemeDialog())
+        await pilot.pause()
+        assert app.screen.__class__.__name__ == "ThemeDialog"
+
+        # Arrow down to preview next theme
+        await pilot.press("down")
+        await pilot.pause()
+        # Theme should have previewed a different theme
+        assert app.theme != orig_theme
+
+        # Escape should cancel and restore orig_theme
+        await pilot.press("escape")
+        await pilot.pause()
+        assert app.theme == orig_theme
+
+
+@pytest.mark.asyncio
+async def test_theme_dialog_apply_saves(monkeypatch, tmp_path):
+    """Verify that pressing Enter on ThemeDialog saves and applies the theme."""
+    import dockdash.themes as themes_mod
+    from dockdash.modals.theme_dialog import ThemeDialog
+
+    fake_config = tmp_path / "config.json"
+    monkeypatch.setattr(themes_mod, "CONFIG_FILE", fake_config)
+    monkeypatch.setattr(themes_mod, "CONFIG_DIR", tmp_path)
+
+    app = DockerDashApp()
+    async with app.run_test(size=(120, 30)) as pilot:
+        await pilot.pause()
+
+        app.push_screen(ThemeDialog())
+        await pilot.pause()
+
+        # Arrow down to select next theme
+        await pilot.press("down")
+        await pilot.pause()
+        new_theme = app.theme
+
+        # Press enter on the option list to save
+        await pilot.press("enter")
+        await pilot.pause()
+
+        assert app.screen.__class__.__name__ != "ThemeDialog"
+        assert app.theme == new_theme
+        assert themes_mod.get_saved_theme() == new_theme
+
+
+def test_theme_fallback_and_config(monkeypatch, tmp_path):
+    """Test get_saved_theme and save_theme behavior with fallbacks."""
+    import dockdash.themes as themes_mod
+
+    fake_config = tmp_path / "config.json"
+    monkeypatch.setattr(themes_mod, "CONFIG_FILE", fake_config)
+    monkeypatch.setattr(themes_mod, "CONFIG_DIR", tmp_path)
+
+    # When file doesn't exist, return default theme
+    assert themes_mod.get_saved_theme() == "cyber-slate"
+
+    # Saving valid theme works
+    assert themes_mod.save_theme("tokyo-night")
+    assert themes_mod.get_saved_theme() == "tokyo-night"
+
+    # Invalid theme in config falls back to default
+    themes_mod.save_config({"theme": "non-existent-theme-xyz"})
+    assert themes_mod.get_saved_theme() == "cyber-slate"
+
+
+@pytest.mark.asyncio
+async def test_command_palette_quit_quits_directly():
+    """Verify that selecting Quit from command palette exits directly without modal."""
+    app = DockerDashApp()
+    async with app.run_test(size=(120, 30)) as pilot:
+        await pilot.pause()
+        commands = list(app.get_system_commands(app.screen))
+        quit_cmd = next((c for c in commands if c.title == "Quit"), None)
+        assert quit_cmd is not None
+        # The callback must be app.exit directly, not action_quit which shows the modal
+        assert quit_cmd.callback == app.exit
+
+
+@pytest.mark.asyncio
+async def test_command_palette_theme_routes_to_dialog():
+    """Verify that Theme command in palette routes to action_open_themes."""
+    app = DockerDashApp()
+    async with app.run_test(size=(120, 30)) as pilot:
+        await pilot.pause()
+        commands = list(app.get_system_commands(app.screen))
+        theme_cmd = next((c for c in commands if c.title == "Theme"), None)
+        assert theme_cmd is not None
+        assert theme_cmd.callback == app.action_open_themes
+
+
+

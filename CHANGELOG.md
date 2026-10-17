@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Color templates and themes system with 9 curated visual themes:
+  - Cyber Slate (Default) — Electric Cyan & Deep Obsidian Void
+  - Tokyo Night — Cyberpunk Neon Violet & Deep Indigo
+  - Dracula — Classic Vampire Purple & Fluorescent Pink
+  - Nord — Arctic Frost Cyan & Polar Night
+  - Catppuccin Mocha — Soothing Pastel Mauve & Dark Charcoal
+  - Monokai Pro — Vivid Purple, Neon Yellow & Dark Olive
+  - Gruvbox Dark — Retro Warm Aqua, Gold & Deep Bark
+  - Synthwave '84 — Retro Synth Neon Cyan, Magenta & Purple
+  - Solarized Dark — Precision Blue & Deep Marine Navy
+- Interactive Theme Selection modal dialog (`ThemeDialog`) with real-time live previewing while scrolling through options.
+- Persistent configuration saving selected themes to `~/.config/dockdash/config.json`.
+- Exit confirmation flow (`ExitDialog` on `q`) presenting vertical action buttons: Quit DockDash [Q], Theme Settings [S], and `Esc` to close/resume.
+- Command palette (`Ctrl+P` / `^p`) Quit action directly exits the application immediately without showing the confirmation dialog.
+- Global `t` keyboard shortcut and Help Dialog entry to open Theme Settings directly.
+- Added numbered shortcut notations to all tab titles for enhanced usability and instant keyboard navigation: `Containers (1)`, `Images (2)`, `Volumes (3)`, `Networks (4)`, `Compose (5)`, `System (6)`.
+
+### Fixed
+- Fixed active tab title text clipping where `border-top` on single-line `Tab` widgets consumed the available cell height, leaving only a blue stripe without visible text.
+- Fixed keyboard shortcut footer buttons and tab action bars disappearing off-screen caused by `border-top` displacing single-line footer widgets.
+
+### Changed
+- Converted all application stylesheet rules (`styles.tcss`) and widget `DEFAULT_CSS` to dynamic theme variables (`$background`, `$surface`, `$panel`, `$primary`, `$secondary`, `$accent`, `$success`, `$warning`, `$error`, `$foreground`, `$text-muted`, `$border`).
+- Overhauled application default aesthetics to a high-contrast Cyber-Slate palette with obsidian void (`#0a0e17`), clean slate panels (`#121824`), and vibrant Electric Sky Blue accents (`#38bdf8`).
+- Redesigned all modal and panel buttons (primary, success, warning, error, default) with bold text, luminous borders, and high-visibility focus highlights.
+- Upgraded table row cursor highlights to Azure Blue with pure white text to ensure selected containers and images are instantly identifiable.
+
 ---
 
 ## [v0.1.5] - 2026-10-15

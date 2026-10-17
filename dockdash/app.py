@@ -8,11 +8,15 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING, Iterable
 
 from textual import work
-from textual.app import App, ComposeResult
+from textual.app import App, ComposeResult, SystemCommand
 from textual.binding import Binding
 from textual.containers import Center, Vertical
+
+if TYPE_CHECKING:
+    from textual.screen import Screen
 from textual.widgets import (
     Footer,
     Header,
@@ -22,13 +26,16 @@ from textual.widgets import (
 )
 
 from dockdash.docker_client import DockerClient
+from dockdash.modals.exit_dialog import ExitDialog
 from dockdash.modals.help_dialog import HelpDialog
+from dockdash.modals.theme_dialog import ThemeDialog
 from dockdash.screens.compose import ComposeTab
 from dockdash.screens.containers import ContainersTab
 from dockdash.screens.images import ImagesTab
 from dockdash.screens.networks import NetworksTab
 from dockdash.screens.system import SystemTab
 from dockdash.screens.volumes import VolumesTab
+from dockdash.themes import get_saved_theme, register_themes
 
 if getattr(sys, "frozen", False):
     # PyInstaller bundle path
@@ -49,21 +56,27 @@ class DockerDashApp(App):
 
     BINDINGS = [
         Binding("q", "quit", "Quit", show=True, priority=True),
+        Binding("t", "open_themes", "Theme", show=True),
         Binding("question_mark", "show_help", "Help", show=True, key_display="?"),
         Binding("f1", "show_help", "Help", show=False),
         Binding("r", "refresh", "Refresh", show=True),
         Binding("f5", "refresh", "Refresh", show=False),
-        Binding("1", "tab_1", "Containers", show=False, priority=True),
-        Binding("2", "tab_2", "Images", show=False, priority=True),
-        Binding("3", "tab_3", "Volumes", show=False, priority=True),
-        Binding("4", "tab_4", "Networks", show=False, priority=True),
-        Binding("5", "tab_5", "Compose", show=False, priority=True),
-        Binding("6", "tab_6", "System", show=False, priority=True),
+        Binding("1", "tab_1", "Containers (1)", show=False, priority=True),
+        Binding("2", "tab_2", "Images (2)", show=False, priority=True),
+        Binding("3", "tab_3", "Volumes (3)", show=False, priority=True),
+        Binding("4", "tab_4", "Networks (4)", show=False, priority=True),
+        Binding("5", "tab_5", "Compose (5)", show=False, priority=True),
+        Binding("6", "tab_6", "System (6)", show=False, priority=True),
         Binding("slash", "search", "Search", show=False),
     ]
 
     def __init__(self) -> None:
         super().__init__()
+        register_themes(self)
+        try:
+            self.theme = get_saved_theme()
+        except Exception:
+            pass
         self._docker = DockerClient()
         # Attempt connection immediately so compose() can branch
         self._connected = self._docker.connect()
@@ -81,32 +94,32 @@ class DockerDashApp(App):
                 yield Static(
                     "\nCannot connect to Docker daemon.\n\n"
                     "Make sure Docker is installed and running:\n"
-                    "  [#79c0ff]sudo systemctl start docker[/]\n"
-                    "  [#79c0ff]sudo usermod -aG docker $USER[/]\n\n"
+                    "  [#38bdf8 bold]sudo systemctl start docker[/]\n"
+                    "  [#38bdf8 bold]sudo usermod -aG docker $USER[/]\n\n"
                     "Then restart DockDash.",
                     classes="error-message",
                 )
         else:
             with TabbedContent(
-                "Containers",
-                "Images",
-                "Volumes",
-                "Networks",
-                "Compose",
-                "System",
+                "Containers (1)",
+                "Images (2)",
+                "Volumes (3)",
+                "Networks (4)",
+                "Compose (5)",
+                "System (6)",
                 id="main-tabs",
             ):
-                with TabPane("Containers", id="tab-containers"):
+                with TabPane("Containers (1)", id="tab-containers"):
                     yield ContainersTab(id="containers-tab")
-                with TabPane("Images", id="tab-images"):
+                with TabPane("Images (2)", id="tab-images"):
                     yield ImagesTab(id="images-tab")
-                with TabPane("Volumes", id="tab-volumes"):
+                with TabPane("Volumes (3)", id="tab-volumes"):
                     yield VolumesTab(id="volumes-tab")
-                with TabPane("Networks", id="tab-networks"):
+                with TabPane("Networks (4)", id="tab-networks"):
                     yield NetworksTab(id="networks-tab")
-                with TabPane("Compose", id="tab-compose"):
+                with TabPane("Compose (5)", id="tab-compose"):
                     yield ComposeTab(id="compose-tab")
-                with TabPane("System", id="tab-system"):
+                with TabPane("System (6)", id="tab-system"):
                     yield SystemTab(id="system-tab")
 
         yield Footer()
@@ -273,6 +286,50 @@ class DockerDashApp(App):
     def action_show_help(self) -> None:
         """Show the help dialog."""
         self.push_screen(HelpDialog())
+
+    def action_quit(self) -> None:
+        """Prompt user with Exit Dialog (Quit / Theme Settings / Cancel)."""
+
+        def on_exit_choice(choice: str | None) -> None:
+            if choice == "quit":
+                self.exit()
+            elif choice == "settings":
+                self.action_open_themes()
+
+        self.push_screen(ExitDialog(), on_exit_choice)
+
+    def action_open_themes(self) -> None:
+        """Open the color templates and theme selector modal."""
+        self.push_screen(ThemeDialog())
+
+    def action_change_theme(self) -> None:
+        """Route command palette theme change to DockDash theme selector."""
+        self.action_open_themes()
+
+    def search_themes(self) -> None:
+        """Route command palette search_themes to DockDash theme selector."""
+        self.action_open_themes()
+
+    def get_system_commands(self, screen: Screen) -> Iterable[SystemCommand]:
+        """Provide custom system commands for the command palette.
+
+        Allows quitting immediately without an exit dialog when selected from the command palette.
+        """
+        for cmd in super().get_system_commands(screen):
+            if cmd.title == "Quit":
+                yield SystemCommand(
+                    "Quit",
+                    "Quit the application immediately",
+                    self.exit,
+                )
+            elif cmd.title == "Theme":
+                yield SystemCommand(
+                    "Theme",
+                    "Change the current color template & theme",
+                    self.action_open_themes,
+                )
+            else:
+                yield cmd
 
 
 def main() -> None:

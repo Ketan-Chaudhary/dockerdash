@@ -11,7 +11,7 @@ from dockdash.docker_client import DockerClient
 
 def _kv(label: str, value: str) -> str:
     """Format a key-value pair with Rich markup."""
-    return f"  [#8b949e bold]{label:<16}[/] [#e6edf3]{value}[/]"
+    return f"  [#94a3b8 bold]{label:<16}[/] [#f8fafc]{value}[/]"
 
 
 class ContainerDetail(VerticalScroll):
@@ -20,8 +20,8 @@ class ContainerDetail(VerticalScroll):
     DEFAULT_CSS = """
     ContainerDetail {
         height: 1fr;
-        border: solid #30363d;
-        background: #161b22;
+        border: solid $border;
+        background: $surface;
         padding: 1 1;
     }
     ContainerDetail .detail-section {
@@ -56,21 +56,21 @@ class ContainerDetail(VerticalScroll):
 
         # Environment
         env = config.get("Env", []) or []
-        env_lines = "\n".join(f"    [#8b949e]{e}[/]" for e in env[:20])
+        env_lines = "\n".join(f"    [#cbd5e1]{e}[/]" for e in env[:20])
         if len(env) > 20:
             env_lines += f"\n    [dim]... and {len(env) - 20} more[/]"
 
         # Mounts
         mounts = attrs.get("Mounts", []) or []
         mount_lines = "\n".join(
-            f"    [#8b949e]{m.get('Source', '?')} → {m.get('Destination', '?')} ({m.get('Mode', 'rw')})[/]"
+            f"    [#cbd5e1]{m.get('Source', '?')} → {m.get('Destination', '?')} ({m.get('Mode', 'rw')})[/]"
             for m in mounts
         )
 
         # Network
         networks = network_settings.get("Networks", {}) or {}
         net_lines = "\n".join(
-            f"    [#8b949e]{net_name}: {info.get('IPAddress', 'N/A')}[/]"
+            f"    [#cbd5e1]{net_name}: {info.get('IPAddress', 'N/A')}[/]"
             for net_name, info in networks.items()
         )
 
@@ -85,7 +85,7 @@ class ContainerDetail(VerticalScroll):
             restart_str += f" (max {restart['MaximumRetryCount']})"
 
         content = "\n".join([
-            "[#3fb9a0 bold]━━ Overview ━━[/]",
+            "[#38bdf8 bold]━━ Overview ━━[/]",
             _kv("Name", name),
             _kv("ID", attrs.get("Id", "")[:12]),
             _kv("Image", image),
@@ -95,15 +95,15 @@ class ContainerDetail(VerticalScroll):
             _kv("Command", cmd_str),
             _kv("Restart", restart_str),
             "",
-            "[#3fb9a0 bold]━━ Networking ━━[/]",
+            "[#38bdf8 bold]━━ Networking ━━[/]",
             _kv("Ports", port_str),
-            "  [#8b949e bold]Networks[/]",
+            "  [#94a3b8 bold]Networks[/]",
             net_lines or "    [dim]none[/]",
             "",
-            "[#3fb9a0 bold]━━ Mounts ━━[/]",
+            "[#38bdf8 bold]━━ Mounts ━━[/]",
             mount_lines or "    [dim]none[/]",
             "",
-            "[#3fb9a0 bold]━━ Environment ━━[/]",
+            "[#38bdf8 bold]━━ Environment ━━[/]",
             env_lines or "    [dim]none[/]",
         ])
 
