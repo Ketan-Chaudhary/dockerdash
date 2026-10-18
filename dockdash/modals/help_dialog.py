@@ -9,7 +9,7 @@ from textual.widgets import Button, Static
 
 GLOBAL_SHORTCUTS = [
     ("q / Ctrl+C", "Exit dialog (Quit / Themes)"),
-    ("t", "Theme & appearance settings"),
+    ("t / T", "Theme & appearance settings"),
     ("1-6", "Jump to tab (Containers/Images/Volumes/Networks/Compose/System)"),
     ("r / F5", "Refresh current view"),
     ("/", "Open search / filter"),
@@ -26,7 +26,7 @@ CONTAINER_SHORTCUTS = [
     ("d", "Delete container"),
     ("l", "View container logs"),
     ("i", "Inspect container (JSON)"),
-    ("t", "Attach terminal (exec shell)"),
+    ("t", "Attach terminal (Shell picker)"),
     ("p", "Pause / Unpause container"),
     ("n", "Rename container"),
     ("a", "View container stats"),
@@ -38,7 +38,9 @@ IMAGE_SHORTCUTS = [
     ("t", "Tag / rename image"),
     ("c", "Create container from image"),
     ("i", "Inspect image (JSON)"),
-    ("h", "View image history / layers"),
+    ("l / h", "View visual image layers & history"),
+    ("u", "Filter (all / dangling / unused)"),
+    ("P", "Prune dangling images"),
 ]
 
 VOLUME_SHORTCUTS = [

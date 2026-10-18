@@ -57,16 +57,17 @@ class DockerDashApp(App):
     BINDINGS = [
         Binding("q", "quit", "Quit", show=True, priority=True),
         Binding("t", "open_themes", "Theme", show=True),
+        Binding("T", "open_themes", "Theme", show=False),
         Binding("question_mark", "show_help", "Help", show=True, key_display="?"),
         Binding("f1", "show_help", "Help", show=False),
         Binding("r", "refresh", "Refresh", show=True),
         Binding("f5", "refresh", "Refresh", show=False),
-        Binding("1", "tab_1", "Containers (1)", show=False, priority=True),
-        Binding("2", "tab_2", "Images (2)", show=False, priority=True),
-        Binding("3", "tab_3", "Volumes (3)", show=False, priority=True),
-        Binding("4", "tab_4", "Networks (4)", show=False, priority=True),
-        Binding("5", "tab_5", "Compose (5)", show=False, priority=True),
-        Binding("6", "tab_6", "System (6)", show=False, priority=True),
+        Binding("1", "tab_1", "Containers (1)", show=False),
+        Binding("2", "tab_2", "Images (2)", show=False),
+        Binding("3", "tab_3", "Volumes (3)", show=False),
+        Binding("4", "tab_4", "Networks (4)", show=False),
+        Binding("5", "tab_5", "Compose (5)", show=False),
+        Binding("6", "tab_6", "System (6)", show=False),
         Binding("slash", "search", "Search", show=False),
     ]
 
@@ -146,25 +147,41 @@ class DockerDashApp(App):
     # ── Tab switching ─────────────────────────────────────────────────
 
     def action_tab_1(self) -> None:
+        if len(self.screen_stack) > 1:
+            return
         self._switch_tab("tab-containers")
 
     def action_tab_2(self) -> None:
+        if len(self.screen_stack) > 1:
+            return
         self._switch_tab("tab-images")
 
     def action_tab_3(self) -> None:
+        if len(self.screen_stack) > 1:
+            return
         self._switch_tab("tab-volumes")
 
     def action_tab_4(self) -> None:
+        if len(self.screen_stack) > 1:
+            return
         self._switch_tab("tab-networks")
 
     def action_tab_5(self) -> None:
+        if len(self.screen_stack) > 1:
+            return
         self._switch_tab("tab-compose")
 
     def action_tab_6(self) -> None:
+        if len(self.screen_stack) > 1:
+            return
         self._switch_tab("tab-system")
 
     def on_key(self, event) -> None:
         """Global key interceptor for tab switching and tab-bar navigation."""
+        # Don't switch background tabs when a modal dialog is displayed
+        if len(self.screen_stack) > 1:
+            return
+
         focused = self.focused
 
         # When focused on the tab bar, pressing down arrow enters the active tab content

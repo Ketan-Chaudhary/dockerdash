@@ -11,6 +11,7 @@ from dockdash.docker_client import DockerClient, DockerClientError
 from dockdash.modals.confirm_dialog import ConfirmDialog
 from dockdash.modals.container_create import ContainerCreateDialog
 from dockdash.modals.dockerfile_editor import DockerfileEditorDialog
+from dockdash.modals.image_layers import ImageLayersDialog
 from dockdash.modals.input_dialog import InputDialog, MultiInputDialog
 from dockdash.modals.inspect_dialog import InspectDialog
 from dockdash.widgets.search_bar import SearchBar
@@ -25,7 +26,10 @@ class ImagesTab(Vertical):
         Binding("t", "tag_image", "Tag", show=True),
         Binding("c", "create_container", "Create Container", show=True),
         Binding("i", "inspect_image", "Inspect", show=True),
-        Binding("h", "image_history", "History", show=True),
+        Binding("l", "image_layers", "Layers", show=True),
+        Binding("h", "image_layers", "History", show=False),
+        Binding("u", "toggle_filter_mode", "Filter", show=True),
+        Binding("P", "prune_dangling_images", "Prune Dangling", show=True),
         Binding("e", "edit_dockerfile", "Dockerfile", show=True),
         Binding("slash", "search", "Search", show=False),
         Binding("escape", "exit_search", "Exit Search", show=False),
@@ -38,6 +42,8 @@ class ImagesTab(Vertical):
         self._docker = DockerClient()
         self._images: list[dict] = []
         self._filtered: list[dict] = []
+        self._filter_mode: str = "all"  # "all", "dangling", "unused"
+        self._search_query: str = ""
 
     def compose(self) -> ComposeResult:
         yield SearchBar(id="image-search")
@@ -46,8 +52,10 @@ class ImagesTab(Vertical):
             "[#38bdf8 bold] ⯈ IMAGES [/]  [#38bdf8 bold]p[/][#cbd5e1]=pull  "
             "[#38bdf8 bold]d[/][#cbd5e1]=delete  [#38bdf8 bold]t[/][#cbd5e1]=tag  "
             "[#38bdf8 bold]c[/][#cbd5e1]=create container  "
-            "[#38bdf8 bold]i[/][#cbd5e1]=inspect  [#38bdf8 bold]h[/][#cbd5e1]=history  "
-            "[#38bdf8 bold]e[/][#cbd5e1]=dockerfile editor  "
+            "[#38bdf8 bold]i[/][#cbd5e1]=inspect  [#38bdf8 bold]l[/][#cbd5e1]=layers  "
+            "[#38bdf8 bold]u[/][#cbd5e1]=filter  "
+            "[#38bdf8 bold]P[/][#cbd5e1]=prune  "
+            "[#38bdf8 bold]e[/][#cbd5e1]=dockerfile  "
             "[#38bdf8 bold]/[/][#cbd5e1]=search",
             classes="actions-bar",
         )
@@ -58,11 +66,54 @@ class ImagesTab(Vertical):
 
     async def refresh_data(self) -> None:
         try:
-            self._images = await self._docker.list_images()
-            self._filtered = list(self._images)
-            self._update_table()
+            self._images = await self._docker.list_images(all=True)
+            self._apply_filters()
         except DockerClientError as e:
             self.notify(str(e), severity="error")
+
+    def _apply_filters(self) -> None:
+        query = self._search_query.lower().strip()
+        candidates = list(self._images)
+
+        if self._filter_mode == "dangling":
+            candidates = [img for img in candidates if img.get("is_dangling")]
+        elif self._filter_mode == "unused":
+            candidates = [img for img in candidates if not img.get("in_use")]
+
+        if query:
+            candidates = [
+                img for img in candidates
+                if query in img["repository"].lower()
+                or query in img["tag"].lower()
+                or query in img["id"].lower()
+            ]
+
+        self._filtered = candidates
+        self._update_table()
+        self._update_actions_bar()
+
+    def _update_actions_bar(self) -> None:
+        try:
+            bar = self.query_one(".actions-bar", Static)
+            if self._filter_mode == "dangling":
+                filter_badge = f"[#f87171 bold]u=dangling ({len(self._filtered)})[/]"
+            elif self._filter_mode == "unused":
+                filter_badge = f"[#fbbf24 bold]u=unused ({len(self._filtered)})[/]"
+            else:
+                filter_badge = "[#38bdf8 bold]u[/][#cbd5e1]=filter[/]"
+
+            bar.update(
+                f"[#38bdf8 bold] ⯈ IMAGES [/]  [#38bdf8 bold]p[/][#cbd5e1]=pull  "
+                f"[#38bdf8 bold]d[/][#cbd5e1]=delete  [#38bdf8 bold]t[/][#cbd5e1]=tag  "
+                f"[#38bdf8 bold]c[/][#cbd5e1]=create container  "
+                f"[#38bdf8 bold]i[/][#cbd5e1]=inspect  [#38bdf8 bold]l[/][#cbd5e1]=layers  "
+                f"{filter_badge}  "
+                f"[#38bdf8 bold]P[/][#cbd5e1]=prune  "
+                f"[#38bdf8 bold]e[/][#cbd5e1]=dockerfile  "
+                f"[#38bdf8 bold]/[/][#cbd5e1]=search"
+            )
+        except Exception:
+            pass
 
     def _update_table(self) -> None:
         with self.app.batch_update():
@@ -79,9 +130,17 @@ class ImagesTab(Vertical):
                 size_str = DockerClient.format_bytes(img.get("size", 0))
                 created = img.get("created", "")[:19]
 
+                repo_str = img["repository"]
+                tag_str = img["tag"]
+                if img.get("is_dangling"):
+                    repo_str = "[#f87171 italic]<none>[/]"
+                    tag_str = "[#f87171 italic]<dangling>[/]"
+                elif not img.get("in_use"):
+                    tag_str = f"{tag_str} [#94a3b8](unused)[/]"
+
                 row_data = (
-                    img["repository"],
-                    img["tag"],
+                    repo_str,
+                    tag_str,
                     img["id"],
                     size_str,
                     created,
@@ -122,29 +181,63 @@ class ImagesTab(Vertical):
             return self._filtered[cursor_row]
         return None
 
+    # ── Quick Filter & Prune ──────────────────────────────────────────
+
+    def action_toggle_filter_mode(self) -> None:
+        """Cycle filter mode: all -> dangling -> unused -> all."""
+        modes = ["all", "dangling", "unused"]
+        curr_idx = modes.index(self._filter_mode) if self._filter_mode in modes else 0
+        self._filter_mode = modes[(curr_idx + 1) % len(modes)]
+        self._apply_filters()
+
+        labels = {
+            "all": f"Showing all images ({len(self._filtered)})",
+            "dangling": f"Filtered: Dangling (<none>) ({len(self._filtered)})",
+            "unused": f"Filtered: Unused (no container) ({len(self._filtered)})",
+        }
+        self.notify(labels[self._filter_mode], severity="information")
+
+    async def action_prune_dangling_images(self) -> None:
+        """Prune all dangling (<none>) images."""
+        def on_confirm(confirmed: bool) -> None:
+            if confirmed:
+                self.app.call_later(self._do_prune_dangling)
+
+        self.app.push_screen(
+            ConfirmDialog(
+                title="Prune Dangling Images",
+                message="Are you sure you want to prune all untagged / dangling (<none>) images?",
+                danger=True,
+            ),
+            on_confirm,
+        )
+
+    async def _do_prune_dangling(self) -> None:
+        try:
+            res = await self._docker.prune_images(dangling_only=True)
+            deleted = res.get("ImagesDeleted") or []
+            reclaimed = DockerClient.format_bytes(res.get("SpaceReclaimed", 0))
+            self.notify(f"Pruned {len(deleted)} dangling images ({reclaimed} reclaimed)", severity="information")
+            await self.refresh_data()
+        except DockerClientError as e:
+            self.notify(str(e), severity="error")
+
     # ── Search ────────────────────────────────────────────────────────
 
     def action_search(self) -> None:
         self.query_one("#image-search", SearchBar).show()
 
     def on_search_bar_changed(self, event: SearchBar.Changed) -> None:
-        query = event.query.lower().strip()
-        if not query:
-            self._filtered = list(self._images)
-        else:
-            self._filtered = [
-                img for img in self._images
-                if query in img["repository"].lower()
-                or query in img["tag"].lower()
-                or query in img["id"].lower()
-            ]
-        self._update_table()
+        self._search_query = event.query
+        self._apply_filters()
 
     def action_exit_search(self) -> None:
-        """Exit search and restore full list with Escape."""
+        """Exit search and restore list with Escape."""
         search_bar = self.query_one("#image-search", SearchBar)
-        if search_bar.visible_search or len(self._filtered) < len(self._images):
+        if search_bar.visible_search or self._search_query:
+            self._search_query = ""
             search_bar.hide()
+            self._apply_filters()
             self.query_one("#image-table", DataTable).focus()
 
     def on_search_bar_submitted(self, event: SearchBar.Submitted) -> None:
@@ -155,8 +248,8 @@ class ImagesTab(Vertical):
             table.cursor_coordinate = (0, 0)
 
     def on_search_bar_dismissed(self, event: SearchBar.Dismissed) -> None:
-        self._filtered = list(self._images)
-        self._update_table()
+        self._search_query = ""
+        self._apply_filters()
         self.query_one("#image-table", DataTable).focus()
 
     # ── Navigation ────────────────────────────────────────────────────
@@ -306,20 +399,25 @@ class ImagesTab(Vertical):
         except DockerClientError as e:
             self.notify(str(e), severity="error")
 
-    async def action_image_history(self) -> None:
+    async def action_image_layers(self) -> None:
         image = self._get_selected_image()
         if not image:
             return
         try:
             history = await self._docker.image_history(image["full_id"])
+            image_name = f"{image['repository']}:{image['tag']}"
             self.app.push_screen(
-                InspectDialog(
-                    title=f"History: {image['repository']}:{image['tag']}",
-                    data={"layers": history},
+                ImageLayersDialog(
+                    image_name=image_name,
+                    raw_layers=history,
                 )
             )
         except DockerClientError as e:
             self.notify(str(e), severity="error")
+
+    async def action_image_history(self) -> None:
+        """Alias for action_image_layers."""
+        await self.action_image_layers()
 
     async def action_edit_dockerfile(self) -> None:
         def on_result(result: dict | None) -> None:

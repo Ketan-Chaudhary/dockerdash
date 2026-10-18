@@ -26,6 +26,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Command palette (`Ctrl+P` / `^p`) Quit action directly exits the application immediately without showing the confirmation dialog.
 - Global `t` keyboard shortcut and Help Dialog entry to open Theme Settings directly.
 - Added numbered shortcut notations to all tab titles for enhanced usability and instant keyboard navigation: `Containers (1)`, `Images (2)`, `Volumes (3)`, `Networks (4)`, `Compose (5)`, `System (6)`.
+- Visual Image Layers Inspector (`ImageLayersDialog` on `l` / `h`):
+  - Dedicated interactive modal showing breakdown of all layers in an image.
+  - Proportional visual ASCII gauge bars and percentage contribution for every layer.
+  - Weight-based color coding highlighting bloated layers (cyan, green, yellow, bold red).
+  - Cleaned Dockerfile instruction parser extracting commands (`RUN`, `COPY`, `ADD`, `ENV`, `CMD`, `ENTRYPOINT`, etc.).
+  - Live command detail inspector pane with keyword syntax coloring and timestamp.
+  - Quick keyboard actions: copy command to clipboard (`c`), toggle order between Base-first and Top-first (`o`), and navigate (`↑/↓`).
+- Container Shell Picker (`ShellPickerDialog` on `t`):
+  - Interactive horizontal 2-column modal dialog replacing default `/bin/sh` attach with shell detection and selection.
+  - Presets for Auto-detect (`bash` → `zsh` → `ash` → `sh`), `/bin/bash`, `/bin/sh`, `/bin/zsh`, `/bin/ash`, and custom command execution.
+  - Optional custom user/UID field (`-u user`) to attach as `root` or non-root users.
+  - Number shortcuts `1` through `6` for instant shell selection, with Enter/Esc submission.
+  - Robust terminal input validation and error handling:
+    - Inline dialog error banner preventing empty commands or invalid user/UID syntax.
+    - Pre-flight daemon verification probing if the requested user exists in the container before suspending the UI.
+    - Error catch on non-zero exit codes (e.g., 126, 127) prompting the user before redrawing, preventing screen wipe.
+- Image Dangling & Unused Quick Filter (`u` toggle and `P` prune on Images tab):
+  - Cycle through filter views: `All` → `Dangling (<none>)` → `Unused (no container)` → `All`.
+  - Visual styling tags for `<none>` and `<dangling>` images in the image table.
+  - Dynamic actions bar filter badge showing matching image count.
+  - Dedicated `P` shortcut to prune dangling images with a confirmation dialog.
 
 ### Fixed
 - Fixed active tab title text clipping where `border-top` on single-line `Tab` widgets consumed the available cell height, leaving only a blue stripe without visible text.
