@@ -31,6 +31,7 @@ async def test_shell_picker_interactions():
         "image": "alpine:latest",
     }
     app = DockerDashApp()
+    app._connected = True
     async with app.run_test(size=(120, 36)) as pilot:
         await pilot.pause()
         dialog = ShellPickerDialog(dummy_container)
@@ -68,6 +69,7 @@ async def test_shell_picker_validation_errors():
         "image": "alpine:latest",
     }
     app = DockerDashApp()
+    app._connected = True
     async with app.run_test(size=(120, 36)) as pilot:
         await pilot.pause()
         dialog = ShellPickerDialog(dummy_container)
@@ -116,6 +118,7 @@ async def test_shell_picker_validation_errors():
 async def test_containers_tab_user_not_found_precheck(monkeypatch):
     """Verify that if user does not exist in container, attach aborts with error notification."""
     app = DockerDashApp()
+    app._connected = True
     async with app.run_test(size=(120, 36)) as pilot:
         await pilot.pause()
         containers_tab = app.query_one("#containers-tab", ContainersTab)
@@ -162,6 +165,7 @@ async def test_containers_tab_user_not_found_precheck(monkeypatch):
 async def test_containers_tab_t_key_opens_shell_picker(monkeypatch):
     """Verify pressing 't' on running container pushes ShellPickerDialog."""
     app = DockerDashApp()
+    app._connected = True
     async with app.run_test(size=(120, 36)) as pilot:
         await pilot.pause()
         containers_tab = app.query_one("#containers-tab", ContainersTab)
@@ -193,6 +197,7 @@ async def test_containers_tab_t_key_opens_shell_picker(monkeypatch):
 async def test_containers_tab_custom_command_not_found_precheck(monkeypatch):
     """Verify that if custom command does not exist in container, attach aborts with error notification."""
     app = DockerDashApp()
+    app._connected = True
     async with app.run_test(size=(120, 36)) as pilot:
         await pilot.pause()
         containers_tab = app.query_one("#containers-tab", ContainersTab)

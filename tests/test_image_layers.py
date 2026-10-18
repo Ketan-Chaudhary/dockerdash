@@ -79,6 +79,7 @@ async def test_image_layers_dialog_interactions():
     ]
 
     app = DockerDashApp()
+    app._connected = True
     async with app.run_test(size=(120, 36)) as pilot:
         await pilot.pause()
         dialog = ImageLayersDialog(image_name="test-image:latest", raw_layers=dummy_layers)
@@ -117,6 +118,7 @@ async def test_image_layers_dialog_interactions():
 async def test_images_tab_l_key_triggers_layers_modal(monkeypatch):
     """Verify pressing 'l' on ImagesTab queries image_history and opens ImageLayersDialog."""
     app = DockerDashApp()
+    app._connected = True
     async with app.run_test(size=(120, 36)) as pilot:
         await pilot.pause()
         # Switch to images tab
@@ -151,6 +153,7 @@ async def test_images_tab_l_key_triggers_layers_modal(monkeypatch):
 async def test_image_dangling_and_unused_filter(monkeypatch):
     """Verify cycling filter mode via 'u' on ImagesTab."""
     app = DockerDashApp()
+    app._connected = True
     async with app.run_test(size=(120, 36)) as pilot:
         await pilot.pause()
         app.action_tab_2()
