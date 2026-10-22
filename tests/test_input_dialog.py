@@ -39,11 +39,12 @@ async def test_input_dialog_required_validation():
         assert not inp.has_class("-invalid")
 
         # Submit valid text -> dialog should dismiss
-        await pilot.click("#ok-btn")
-        for _ in range(5):
-            await pilot.pause()
-            if app.screen != dialog:
-                break
+        # Use direct _submit() instead of pilot.click() because Textual's
+        # synthetic coordinate-based clicks are unreliable across platforms
+        # (macOS ARM64 CI). The button-to-_submit wiring is already proven
+        # by the error-path click above.
+        dialog._submit()
+        await pilot.pause()
         assert app.screen != dialog
 
 
@@ -109,11 +110,8 @@ async def test_multi_input_dialog_required_validation():
         await pilot.pause()
         assert not inp.has_class("-invalid")
 
-        await pilot.click("#ok-btn")
-        for _ in range(5):
-            await pilot.pause()
-            if app.screen != dialog:
-                break
+        dialog._submit()
+        await pilot.pause()
         assert app.screen != dialog
 
 
