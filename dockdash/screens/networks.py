@@ -173,6 +173,7 @@ class NetworksTab(Vertical):
                         "id": "name",
                         "label": "Network name:",
                         "placeholder": "e.g. my-app-network",
+                        "required": True,
                     },
                     {
                         "id": "driver",
@@ -186,6 +187,10 @@ class NetworksTab(Vertical):
         )
 
     async def _do_create(self, name: str, driver: str) -> None:
+        name = name.strip()
+        if not name:
+            self.notify("Network name is required", severity="error")
+            return
         try:
             await self._docker.create_network(name=name, driver=driver)
             self.notify(f"Network '{name}' created", severity="information")

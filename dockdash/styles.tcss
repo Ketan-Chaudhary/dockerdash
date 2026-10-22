@@ -334,18 +334,30 @@ Label {
 }
 
 Select {
+    height: auto;
+    border: none;
+    background: transparent;
+    padding: 0;
+}
+
+SelectCurrent {
     background: $surface;
     color: $foreground;
     border: solid $border;
+    height: 3;
+    padding: 0 1;
 }
 
-Select:focus {
+Select:focus > SelectCurrent,
+Select.-expanded > SelectCurrent {
     border: solid $primary;
 }
 
 SelectOverlay {
     background: $surface;
     border: solid $primary;
+    height: auto;
+    max-height: 8;
 }
 
 Switch {
@@ -670,4 +682,12 @@ SearchBar Input:focus {
 
 .action-label {
     color: $text-muted;
+}
+
+.error-label {
+    color: $error;
+    text-style: bold;
+    display: none;
+    height: auto;
+    margin-top: 1;
 }

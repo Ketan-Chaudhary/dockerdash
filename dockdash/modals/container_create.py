@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import errno
+import re
+import socket
+
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import ModalScreen
@@ -14,12 +18,117 @@ from textual.widgets import (
     Static,
 )
 
+from dockdash.docker_client import DockerClient
+
 RESTART_POLICIES = [
     ("No restart", "no"),
     ("Always", "always"),
     ("Unless stopped", "unless-stopped"),
     ("On failure", "on-failure"),
 ]
+
+
+def is_host_port_in_use(ip: str, port: int, proto: str = "tcp") -> bool:
+    """Check if (ip, port) is already bound by an active process on the host."""
+    sock_type = socket.SOCK_STREAM if proto.lower() == "tcp" else socket.SOCK_DGRAM
+    ips_to_test = [ip] if ip and ip != "0.0.0.0" else ["0.0.0.0", "127.0.0.1"]
+    for test_ip in ips_to_test:
+        try:
+            with socket.socket(socket.AF_INET, sock_type) as s:
+                s.bind((test_ip, port))
+        except OSError as e:
+            if e.errno == errno.EADDRINUSE:
+                return True
+            elif e.errno == errno.EACCES and proto.lower() == "tcp":
+                # Fall back to connect probe for privileged ports (< 1024)
+                try:
+                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+                        probe.settimeout(0.2)
+                        target = test_ip if test_ip != "0.0.0.0" else "127.0.0.1"
+                        if probe.connect_ex((target, port)) == 0:
+                            return True
+                except OSError:
+                    pass
+    return False
+
+
+def check_port_conflicts(ports: dict, docker_client: DockerClient | None = None) -> str | None:
+    """Pre-flight check for host port conflicts against running containers and local host sockets.
+
+    Args:
+        ports: Docker SDK ports dict mapping container_port/proto -> host_spec.
+        docker_client: Optional DockerClient instance to query running containers.
+
+    Returns:
+        A human-readable conflict description if a conflict is detected, otherwise None.
+    """
+    if not ports:
+        return None
+
+    # 1. Check for duplicate host ports within user's entered mappings
+    seen_host_ports: set[tuple[str, int, str]] = set()
+    parsed_bindings: list[tuple[str, int, str, str]] = []
+
+    for c_spec, h_spec in ports.items():
+        if h_spec is None:
+            continue
+        c_port, proto = c_spec.split("/") if "/" in c_spec else (c_spec, "tcp")
+        proto = proto.lower()
+
+        h_list = h_spec if isinstance(h_spec, list) else [h_spec]
+        for item in h_list:
+            if isinstance(item, tuple):
+                h_ip, h_port = item[0] or "0.0.0.0", int(item[1])
+            else:
+                h_ip, h_port = "0.0.0.0", int(item)
+
+            key = (h_ip, h_port, proto)
+            wildcard_key = ("0.0.0.0", h_port, proto)
+            if (
+                key in seen_host_ports
+                or wildcard_key in seen_host_ports
+                or (h_ip == "0.0.0.0" and any(k[1] == h_port and k[2] == proto for k in seen_host_ports))
+            ):
+                return f"Duplicate host port {h_port}/{proto} specified in port mappings."
+            seen_host_ports.add(key)
+            parsed_bindings.append((h_ip, h_port, proto, c_port))
+
+    # 2. Check against already running Docker containers
+    if docker_client is not None:
+        try:
+            running_containers = docker_client.client.containers.list(filters={"status": "running"})
+            for c in running_containers:
+                net_ports = c.attrs.get("NetworkSettings", {}).get("Ports", {}) or {}
+                for bound_c_spec, bindings in net_ports.items():
+                    if not bindings:
+                        continue
+                    bound_proto = bound_c_spec.split("/")[1].lower() if "/" in bound_c_spec else "tcp"
+                    for b in bindings:
+                        try:
+                            b_port = int(b.get("HostPort", 0))
+                        except (ValueError, TypeError):
+                            continue
+                        b_ip = b.get("HostIp", "0.0.0.0") or "0.0.0.0"
+
+                        for h_ip, h_port, proto, _ in parsed_bindings:
+                            if b_port == h_port and bound_proto == proto:
+                                if b_ip == "0.0.0.0" or h_ip == "0.0.0.0" or b_ip == h_ip:
+                                    c_name = getattr(c, "name", "unknown")
+                                    c_short = getattr(c, "short_id", getattr(c, "id", "")[:12])
+                                    return (
+                                        f"Port {h_port}/{proto} is already in use by running container "
+                                        f"'{c_name}' ({c_short})."
+                                    )
+        except Exception:
+            pass
+
+    # 3. Check against local host sockets (socket.bind probe)
+    for h_ip, h_port, proto, _ in parsed_bindings:
+        if is_host_port_in_use(h_ip, h_port, proto):
+            return f"Host port {h_port}/{proto} is already in use by another local process."
+
+    return None
+
 
 
 class ContainerCreateDialog(ModalScreen[dict | None]):
@@ -77,7 +186,26 @@ class ContainerCreateDialog(ModalScreen[dict | None]):
     }
     ContainerCreateDialog Select {
         margin: 0 0 1 0;
+        height: auto;
+        border: none;
+        background: transparent;
+        padding: 0;
+    }
+    ContainerCreateDialog SelectCurrent {
+        background: #121824;
+        border: solid #2b384e;
+        color: #f8fafc;
         height: 3;
+        padding: 0 1;
+    }
+    ContainerCreateDialog Select:focus > SelectCurrent,
+    ContainerCreateDialog Select.-expanded > SelectCurrent {
+        border: solid #38bdf8;
+    }
+    ContainerCreateDialog SelectOverlay {
+        background: #121824;
+        border: solid #38bdf8;
+        max-height: 8;
     }
     ContainerCreateDialog Checkbox {
         margin: 1 2 0 0;
@@ -97,9 +225,18 @@ class ContainerCreateDialog(ModalScreen[dict | None]):
     }
     """
 
-    def __init__(self, default_image: str = "") -> None:
+    def __init__(
+        self,
+        default_image: str = "",
+        docker_client: DockerClient | None = None,
+    ) -> None:
         super().__init__()
         self._default_image = default_image
+        self._docker = docker_client if docker_client is not None else DockerClient()
+
+    def _check_port_conflicts(self, ports: dict) -> str | None:
+        """Run pre-flight check against running containers and host socket bindings."""
+        return check_port_conflicts(ports, self._docker)
 
     def compose(self) -> ComposeResult:
         with Vertical(classes="form-container"):
@@ -152,6 +289,7 @@ class ContainerCreateDialog(ModalScreen[dict | None]):
                         yield Select(
                             [(text, value) for text, value in RESTART_POLICIES],
                             value="no",
+                            allow_blank=False,
                             id="field-restart",
                         )
 
@@ -262,6 +400,15 @@ class ContainerCreateDialog(ModalScreen[dict | None]):
         return ports if ports else None
 
     def _parse_volumes(self, raw: str) -> dict | None:
+        """Parse volume mappings string into Docker SDK volumes dict.
+
+        Supported formats (comma-separated):
+          - "/host/path:/container/path"
+          - "/host/path:/container/path:ro"
+          - "volume_name:/container/path:rw"
+
+        Raises ValueError on malformed syntax, empty paths, or invalid modes.
+        """
         if not raw.strip():
             return None
         volumes = {}
@@ -269,16 +416,29 @@ class ContainerCreateDialog(ModalScreen[dict | None]):
             mapping = mapping.strip()
             if not mapping:
                 continue
-            parts = mapping.split(":")
-            if len(parts) >= 2:
-                host = parts[0].strip()
-                container = parts[1].strip()
-                mode = parts[2].strip() if len(parts) > 2 else "rw"
-                if host and container:
-                    volumes[host] = {"bind": container, "mode": mode}
+            parts = [p.strip() for p in mapping.split(":")]
+            if len(parts) < 2 or len(parts) > 3:
+                raise ValueError(
+                    f"Invalid volume mapping '{mapping}'. Expected 'host:container' or 'host:container:ro|rw'."
+                )
+            host, container = parts[0], parts[1]
+            if not host or not container:
+                raise ValueError(
+                    f"Invalid volume mapping '{mapping}'. Host and container paths cannot be empty."
+                )
+            mode = parts[2].lower() if len(parts) == 3 else "rw"
+            if mode not in ("rw", "ro", "z", "Z"):
+                raise ValueError(
+                    f"Invalid volume mode '{parts[2]}'. Must be 'ro' or 'rw'."
+                )
+            volumes[host] = {"bind": container, "mode": mode}
         return volumes if volumes else None
 
     def _parse_env(self, raw: str) -> list | None:
+        """Parse environment variables into a list of 'KEY=value' strings.
+
+        Raises ValueError if an entry has an empty key (e.g. '=value').
+        """
         if not raw.strip():
             return None
         env = []
@@ -287,8 +447,18 @@ class ContainerCreateDialog(ModalScreen[dict | None]):
             if not item:
                 continue
             if "=" in item:
+                k, _ = item.split("=", 1)
+                if not k.strip():
+                    raise ValueError(f"Invalid environment variable '{item}'. Key cannot be empty.")
+                env.append(item)
+            else:
+                if not item.strip():
+                    raise ValueError(f"Invalid environment variable '{item}'. Key cannot be empty.")
                 env.append(item)
         return env if env else None
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        event.input.remove_class("-invalid")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "cancel-btn":
@@ -308,13 +478,65 @@ class ContainerCreateDialog(ModalScreen[dict | None]):
 
         name = self.query_one("#field-name", Input).value.strip()
         command = self.query_one("#field-command", Input).value.strip()
+
         ports_input = self.query_one("#field-ports", Input)
-        ports_raw = ports_input.value
-        volumes_raw = self.query_one("#field-volumes", Input).value
-        env_raw = self.query_one("#field-env", Input).value
+        try:
+            ports = self._parse_ports(ports_input.value)
+            ports_input.remove_class("-invalid")
+        except ValueError as e:
+            ports_input.add_class("-invalid")
+            self.notify(str(e), severity="error")
+            return
+
+        if ports:
+            conflict = self._check_port_conflicts(ports)
+            if conflict:
+                ports_input.add_class("-invalid")
+                self.notify(f"Port conflict: {conflict}", severity="error")
+                return
+
+        volumes_input = self.query_one("#field-volumes", Input)
+        try:
+            volumes = self._parse_volumes(volumes_input.value)
+            volumes_input.remove_class("-invalid")
+        except ValueError as e:
+            volumes_input.add_class("-invalid")
+            self.notify(str(e), severity="error")
+            return
+
+        env_input = self.query_one("#field-env", Input)
+        try:
+            env = self._parse_env(env_input.value)
+            env_input.remove_class("-invalid")
+        except ValueError as e:
+            env_input.add_class("-invalid")
+            self.notify(str(e), severity="error")
+            return
+
         network = self.query_one("#field-network", Input).value.strip()
-        memory = self.query_one("#field-memory", Input).value.strip()
-        cpus = self.query_one("#field-cpus", Input).value.strip()
+
+        memory_input = self.query_one("#field-memory", Input)
+        memory = memory_input.value.strip()
+        if memory:
+            if not re.match(r"^\d+([bkmgBKMG](?:b|B)?)?$", memory):
+                memory_input.add_class("-invalid")
+                self.notify(f"Invalid memory limit '{memory}'. Example: 512m, 1g, 2gb", severity="error")
+                return
+            memory_input.remove_class("-invalid")
+
+        cpus_input = self.query_one("#field-cpus", Input)
+        cpus = cpus_input.value.strip()
+        if cpus:
+            try:
+                cpu_val = int(cpus)
+                if cpu_val <= 0:
+                    raise ValueError
+                cpus_input.remove_class("-invalid")
+            except ValueError:
+                cpus_input.add_class("-invalid")
+                self.notify(f"CPUs must be a positive integer, got '{cpus}'.", severity="error")
+                return
+
         restart_sel = self.query_one("#field-restart", Select)
         restart = restart_sel.value if restart_sel.value != Select.BLANK else "no"
         privileged = self.query_one("#field-privileged", Checkbox).value
@@ -325,44 +547,22 @@ class ContainerCreateDialog(ModalScreen[dict | None]):
             config["name"] = name
         if command:
             config["command"] = command
-
-        try:
-            ports = self._parse_ports(ports_raw)
-            ports_input.remove_class("-invalid")
-        except ValueError as e:
-            ports_input.add_class("-invalid")
-            self.notify(str(e), severity="error")
-            return
-
         if ports:
             config["ports"] = ports
-
-        volumes = self._parse_volumes(volumes_raw)
         if volumes:
             config["volumes"] = volumes
-
-        env = self._parse_env(env_raw)
         if env:
             config["environment"] = env
-
         if network:
             config["network"] = network
-
         if memory:
             config["mem_limit"] = memory
-
         if cpus:
-            try:
-                config["cpu_count"] = int(cpus)
-            except ValueError:
-                pass
-
+            config["cpu_count"] = int(cpus)
         if restart and restart != "no":
             config["restart_policy"] = {"Name": restart}
-
         if privileged:
             config["privileged"] = True
-
         if auto_remove:
             config["auto_remove"] = True
 
@@ -370,3 +570,4 @@ class ContainerCreateDialog(ModalScreen[dict | None]):
 
     def action_cancel(self) -> None:
         self.dismiss(None)
+

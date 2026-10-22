@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical
@@ -272,14 +274,31 @@ class ImagesTab(Vertical):
                 title="⟨ PULL IMAGE ⟩",
                 label="Image name (repository:tag):",
                 placeholder="e.g. nginx:latest, python:3.12-slim, ubuntu",
+                required=True,
             ),
             on_input,
         )
 
     async def _do_pull(self, image_spec: str) -> None:
-        parts = image_spec.split(":")
-        repo = parts[0]
-        tag = parts[1] if len(parts) > 1 else "latest"
+        image_spec = image_spec.strip()
+        if not image_spec:
+            self.notify("Image name is required", severity="error")
+            return
+
+        last_slash = image_spec.rfind("/")
+        last_colon = image_spec.rfind(":")
+        if last_colon > last_slash:
+            repo = image_spec[:last_colon].strip()
+            tag = image_spec[last_colon + 1:].strip()
+        else:
+            repo = image_spec.strip()
+            tag = "latest"
+
+        if not repo:
+            self.notify("Image repository is required", severity="error")
+            return
+        if not tag:
+            tag = "latest"
 
         self.notify(f"Pulling {repo}:{tag}...", severity="information")
         try:
@@ -339,6 +358,7 @@ class ImagesTab(Vertical):
                         "label": "Repository name:",
                         "placeholder": "e.g. myapp, myregistry/myapp",
                         "default": image["repository"],
+                        "required": True,
                     },
                     {
                         "id": "tag",
@@ -352,15 +372,22 @@ class ImagesTab(Vertical):
         )
 
     async def _do_tag(self, image_id: str, repo: str, tag: str) -> None:
+        repo = repo.strip()
         if not repo:
             self.notify("Repository name is required", severity="error")
             return
+        tag = tag.strip() if tag else "latest"
+        if re.search(r"\s", repo) or re.search(r"[\s:]", tag):
+            self.notify("Invalid repository or tag format (spaces not allowed)", severity="error")
+            return
+
         try:
             await self._docker.tag_image(image_id, repo, tag)
             self.notify(f"Tagged as {repo}:{tag}", severity="information")
             await self.refresh_data()
         except DockerClientError as e:
             self.notify(str(e), severity="error")
+
 
     async def action_create_container(self) -> None:
         image = self._get_selected_image()
@@ -373,7 +400,9 @@ class ImagesTab(Vertical):
                 self.app.call_later(self._do_create_container, config)
 
         self.app.push_screen(
-            ContainerCreateDialog(default_image=default_image),
+            ContainerCreateDialog(
+                default_image=default_image, docker_client=self._docker
+            ),
             on_config,
         )
 

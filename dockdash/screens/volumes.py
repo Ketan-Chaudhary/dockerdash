@@ -176,6 +176,7 @@ class VolumesTab(Vertical):
                         "id": "name",
                         "label": "Volume name:",
                         "placeholder": "e.g. my-data-volume",
+                        "required": True,
                     },
                     {
                         "id": "driver",
@@ -189,6 +190,10 @@ class VolumesTab(Vertical):
         )
 
     async def _do_create(self, name: str, driver: str) -> None:
+        name = name.strip()
+        if not name:
+            self.notify("Volume name is required", severity="error")
+            return
         try:
             await self._docker.create_volume(name=name, driver=driver)
             self.notify(f"Volume '{name}' created", severity="information")

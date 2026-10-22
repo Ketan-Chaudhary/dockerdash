@@ -16,6 +16,7 @@ from textual.widgets import DataTable, Static
 
 from dockdash.docker_client import DockerClient, DockerClientError
 from dockdash.modals.confirm_dialog import ConfirmDialog
+from dockdash.modals.container_create import ContainerCreateDialog
 from dockdash.modals.input_dialog import InputDialog
 from dockdash.modals.inspect_dialog import InspectDialog
 from dockdash.modals.shell_picker import ShellPickerDialog
@@ -29,6 +30,7 @@ class ContainersTab(Vertical):
     """Container management tab with table, detail panel, and actions."""
 
     BINDINGS = [
+        Binding("c", "create_container", "Create", show=True),
         Binding("s", "start_container", "Start", show=True),
         Binding("S", "stop_container", "Stop", show=True),
         Binding("R", "restart_container", "Restart", show=True),
@@ -54,7 +56,8 @@ class ContainersTab(Vertical):
     def compose(self) -> ComposeResult:
         yield SearchBar(id="container-search")
         yield Static(
-            "[#38bdf8 bold] ⯈ CONTAINERS [/]  [#38bdf8 bold]s[/][#cbd5e1]=start  "
+            "[#38bdf8 bold] ⯈ CONTAINERS [/]  [#38bdf8 bold]c[/][#cbd5e1]=create  "
+            "[#38bdf8 bold]s[/][#cbd5e1]=start  "
             "[#38bdf8 bold]S[/][#cbd5e1]=stop  [#38bdf8 bold]R[/][#cbd5e1]=restart  "
             "[#38bdf8 bold]d[/][#cbd5e1]=delete  [#38bdf8 bold]l[/][#cbd5e1]=logs  "
             "[#38bdf8 bold]i[/][#cbd5e1]=inspect  [#38bdf8 bold]t[/][#cbd5e1]=terminal  "
@@ -329,14 +332,37 @@ class ContainersTab(Vertical):
                 label=f"New name for '{container['name']}':",
                 default_value=container["name"],
                 placeholder="new-container-name",
+                required=True,
             ),
             on_name,
         )
 
     async def _do_rename(self, cid: str, new_name: str) -> None:
+        new_name = new_name.strip()
+        if not new_name:
+            self.notify("Container name cannot be empty", severity="error")
+            return
         try:
             await self._docker.rename_container(cid, new_name)
             self.notify(f"Renamed to '{new_name}'", severity="information")
+            await self.refresh_data()
+        except DockerClientError as e:
+            self.notify(str(e), severity="error")
+
+    async def action_create_container(self) -> None:
+        def on_config(config: dict | None) -> None:
+            if config:
+                self.app.call_later(self._do_create_container, config)
+
+        self.app.push_screen(
+            ContainerCreateDialog(docker_client=self._docker),
+            on_config,
+        )
+
+    async def _do_create_container(self, config: dict) -> None:
+        try:
+            cid = await self._docker.create_container(config)
+            self.notify(f"Container created: {cid[:12]}", severity="information")
             await self.refresh_data()
         except DockerClientError as e:
             self.notify(str(e), severity="error")
