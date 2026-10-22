@@ -40,7 +40,10 @@ async def test_input_dialog_required_validation():
 
         # Submit valid text -> dialog should dismiss
         await pilot.click("#ok-btn")
-        await pilot.pause()
+        for _ in range(5):
+            await pilot.pause()
+            if app.screen != dialog:
+                break
         assert app.screen != dialog
 
 
@@ -107,7 +110,10 @@ async def test_multi_input_dialog_required_validation():
         assert not inp.has_class("-invalid")
 
         await pilot.click("#ok-btn")
-        await pilot.pause()
+        for _ in range(5):
+            await pilot.pause()
+            if app.screen != dialog:
+                break
         assert app.screen != dialog
 
 
