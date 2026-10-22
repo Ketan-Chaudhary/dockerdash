@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 
 from textual.app import ComposeResult
@@ -191,6 +192,9 @@ class DockerfileEditorDialog(ModalScreen[dict | None]):
         if not path:
             self.notify("File path is required", severity="error")
             return
+        if os.path.isdir(path):
+            self.notify("Specified path is a directory, not a Dockerfile", severity="error")
+            return
 
         try:
             os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
@@ -207,6 +211,15 @@ class DockerfileEditorDialog(ModalScreen[dict | None]):
 
         if not path:
             self.notify("File path is required", severity="error")
+            return
+        if os.path.isdir(path):
+            self.notify("Specified path is a directory, not a Dockerfile", severity="error")
+            return
+        if not content.strip():
+            self.notify("Dockerfile content cannot be empty", severity="error")
+            return
+        if tag and (re.search(r"\s", tag) or tag.count(":") > 1):
+            self.notify("Invalid tag format (spaces not allowed)", severity="error")
             return
 
         # Save first

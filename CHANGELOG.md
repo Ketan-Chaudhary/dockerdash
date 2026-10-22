@@ -47,8 +47,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Visual styling tags for `<none>` and `<dangling>` images in the image table.
   - Dynamic actions bar filter badge showing matching image count.
   - Dedicated `P` shortcut to prune dangling images with a confirmation dialog.
+- Input Validation & Error Handling System:
+  - Input dialog validation framework (`InputDialog` & `MultiInputDialog`) supporting `required=True` fields and custom validator callbacks.
+  - Inline error feedback with luminous red `-invalid` input border styling and `#dialog-error` inline warning messages.
+  - Live error reset: editing an invalid input immediately clears error borders and warning banners.
+  - Hardened Container Creation Form (`ContainerCreateDialog`):
+    - Added positive integer validation for CPU limits, preventing non-numeric or negative values.
+    - Added syntax checking for memory limits (supporting formats like `512m`, `1g`, `2gb`).
+    - Added volume mapping syntax validation (`host:container[:mode]`), rejecting missing container paths or invalid modes.
+    - Added environment variable validation, preventing empty keys.
+  - Image Pull & Tagging:
+    - Added support for private Docker registries with port numbers (e.g., `registry.example.com:5000/repo:tag`) during image pulls, accurately distinguishing registry ports from tags.
+    - Added validation for repository and tag names, prohibiting whitespace or invalid colons.
+  - Port Conflict Pre-Flight Check in Container Creation Form (`ContainerCreateDialog`):
+    - Instant pre-flight validation preventing cryptic Docker daemon port collision errors (`port is already allocated`).
+    - Internal duplicate host port detection within the entered mappings (e.g. `8080:80, 8080:8080` or overlapping `0.0.0.0` wildcards).
+    - Live Docker daemon probe querying currently running containers to detect conflicting host port bindings, displaying specific container name and short ID (e.g. `Port 8080/tcp is already in use by running container 'my-web' (a1b2c3d4e5f6)`).
+    - Active host socket binding probe (`is_host_port_in_use`) using non-blocking socket bind and `connect_ex` fallback for privileged ports (< 1024) to detect ports already bound by local system processes.
+    - Added direct container creation keyboard shortcut (`c`) to the Containers tab (`ContainersTab`).
+  - Dockerfile Editor validation: added directory detection, non-empty content checks, and tag syntax verification.
 
 ### Fixed
+- Fixed container creation restart policy dropdown (`Select` widget in `ContainerCreateDialog`):
+  - Removed conflicting fixed `height: 3` and outer border rules on `Select` that crushed `SelectCurrent` into a single line with illegible border artifacts and clipped text.
+  - Styled `SelectCurrent` and `SelectOverlay` directly with proper height, borders, and focus/expanded highlights.
+  - Set `allow_blank=False` on the restart policy `Select` to eliminate the unnecessary blank `"Select"` option from the dropdown list.
+- Fixed test suites failing on macOS and Windows CI by ensuring proper Docker daemon connection mocking in `test_image_layers.py` and `test_shell_picker.py`.
 - Fixed active tab title text clipping where `border-top` on single-line `Tab` widgets consumed the available cell height, leaving only a blue stripe without visible text.
 - Fixed keyboard shortcut footer buttons and tab action bars disappearing off-screen caused by `border-top` displacing single-line footer widgets.
 

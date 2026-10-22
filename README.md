@@ -259,15 +259,16 @@ DockDash is fully operable via keyboard. Press `?` or `F1` at any time for the c
 
 ```
 dockerdash/
-├── pyproject.toml                 # Package config, dependencies, scripts
+├── pyproject.toml                 # Package config, dependencies, scripts, pytest & ruff configs
 ├── LICENSE                        # MIT License
-├── README.md                      # This file
-├── CHANGELOG.md                   # Release history
+├── README.md                      # Documentation & guides
+├── CHANGELOG.md                   # Full release & feature history
 │
 ├── .github/
 │   ├── workflows/
-│   │   ├── ci.yml                 # PR checks: lint → test → build (matrix)
-│   │   └── release.yml            # Automated release on tag push
+│   │   ├── ci.yml                 # PR checks: lint → multi-OS test matrix → build
+│   │   ├── release.yml            # Automated release & PyPI publishing on tag push
+│   │   └── release-on-merge.yml   # Automated semver bumping and PR creation
 │   ├── ISSUE_TEMPLATE/
 │   │   ├── bug_report.md
 │   │   └── feature_request.md
@@ -275,43 +276,69 @@ dockerdash/
 │   └── dependabot.yml
 │
 ├── docs/
-│   └── screenshots/               # PNG + SVG screenshots for README
+│   └── screenshots/               # PNG visual walkthrough assets
 │
-├── tests/                         # Pytest unit & integration tests
-│   ├── test_app.py                # Core app, tab switching, item selection
-│   ├── test_docker_client.py      # Docker SDK client wrapper tests
-│   ├── test_container_create.py   # Container creation wizard tests
-│   └── test_log_viewer.py         # Log viewer component tests
+├── tests/                         # Pytest unit & integration suite (60+ tests)
+│   ├── test_app.py                # Core app, tab navigation, keybindings, cursor selection
+│   ├── test_docker_client.py      # Async Docker SDK client wrapper tests
+│   ├── test_container_create.py   # Container creation wizard & port pre-flight unit tests
+│   ├── test_forms_validation.py   # Interactive form error handling & collision tests
+│   ├── test_image_layers.py       # Image layers parsing, ordering & visual gauge tests
+│   ├── test_input_dialog.py       # Generic text & multi-input modal validation tests
+│   ├── test_log_viewer.py         # Log streaming, search, timestamp & export tests
+│   └── test_shell_picker.py       # Shell detection & attach probe tests
 │
-└── dockdash/                      # Main package
-    ├── __init__.py
-    ├── app.py                     # Textual App entry point & global routing
-    ├── docker_client.py           # Async Docker Engine API wrapper
-    ├── styles.tcss                # High-contrast dark theme stylesheet
+└── dockdash/                      # Core package source
+    ├── __init__.py                # Package metadata & exports
+    ├── app.py                     # Main Textual App, routing, global keybindings
+    ├── docker_client.py           # Async Docker Engine API wrapper & streaming utilities
+    ├── themes.py                  # 9 curated themes, live preview, config persistence
+    ├── styles.tcss                # Variable-driven TCSS design system
     │
-    ├── screens/                   # Tab screen components
-    │   ├── containers.py          # Container management
-    │   ├── images.py              # Image management
-    │   ├── volumes.py             # Volume management
-    │   ├── networks.py            # Network management
-    │   ├── compose.py             # Docker Compose stacks
-    │   └── system.py              # Engine status & cleanup
+    ├── screens/                   # Primary tab views
+    │   ├── containers.py          # Container management, actions, stats & attach
+    │   ├── images.py              # Image management, dangling filters, pull & tag
+    │   ├── volumes.py             # Volume management & lifecycle
+    │   ├── networks.py            # Network management & system network protection
+    │   ├── compose.py             # Docker Compose project discovery & stack control
+    │   └── system.py              # Engine overview, disk breakdown & granular prune tools
     │
-    ├── widgets/                   # Reusable UI widgets
-    │   ├── container_detail.py    # Container attributes panel
-    │   ├── log_viewer.py          # Full-screen log viewer
-    │   ├── stats_display.py       # Real-time stats bars
-    │   ├── pull_progress.py       # Image pull progress indicator
-    │   └── search_bar.py          # Search & filter bar
+    ├── widgets/                   # Reusable UI components
+    │   ├── container_detail.py    # Container attributes & inspector panel
+    │   ├── log_viewer.py          # Full-screen live log streaming modal
+    │   ├── stats_display.py       # Real-time resource usage gauges (CPU/RAM/IO/PIDs)
+    │   ├── pull_progress.py       # Layer-by-layer pull progress indicator
+    │   └── search_bar.py          # Universal live regex / search filter bar
     │
-    └── modals/                    # Dialog & modal screens
-        ├── container_create.py    # Container creation wizard
-        ├── dockerfile_editor.py   # Dockerfile editor
-        ├── confirm_dialog.py      # Confirmation dialog
-        ├── input_dialog.py        # Text input dialog
-        ├── inspect_dialog.py      # JSON inspect viewer
-        └── help_dialog.py         # Keyboard shortcuts reference
+    └── modals/                    # Interactive dialogs & modal screens
+        ├── container_create.py    # Container creation wizard with port conflict pre-flight
+        ├── image_layers.py        # Visual image layer inspector with size gauges
+        ├── shell_picker.py        # Shell detector & user attach dialog
+        ├── theme_dialog.py        # Interactive theme picker with instant preview
+        ├── dockerfile_editor.py   # Syntax-highlighted Dockerfile editor & builder
+        ├── confirm_dialog.py      # Action confirmation modal
+        ├── exit_dialog.py         # App exit & settings switcher
+        ├── input_dialog.py        # Single & multi-field validated input dialogs
+        ├── inspect_dialog.py      # Pretty JSON inspection viewer
+        └── help_dialog.py         # Keyboard shortcuts cheatsheet
 ```
+
+### Key Architectural Patterns
+
+1. **Non-Blocking Reactive Concurrency**:
+   - Docker daemon calls are dispatched via Textual's `@work(exclusive=True)` workers, keeping the UI at a responsive 60 FPS.
+   - Batch table updates (`app.batch_update()`) and cell diffing (`update_cell`) avoid destructive redraws and cursor flickering.
+
+2. **Pre-Flight Validation & Error Guardrails**:
+   - Form inputs enforce client-side syntax checks (CPU limits, memory formats, volume specifications, non-empty names) with visual `-invalid` styling before touching the Docker daemon.
+   - Container creation probes both the Docker daemon (for running container port bindings) and the local OS network stack (via non-blocking `socket.bind()` and privileged-port `connect_ex` fallback) to eliminate cryptic port conflict errors (`port is already allocated`).
+
+3. **Dynamic Theming System**:
+   - Centralized theme tokens (`$background`, `$surface`, `$primary`, `$accent`, etc.) power `styles.tcss`.
+   - Themes can be switched live with real-time previewing in `ThemeDialog` and are persisted across sessions in `~/.config/dockdash/config.json`.
+
+4. **Robust TUI Suspension & Terminal Attach**:
+   - Terminal sessions cleanly suspend Textual application mode to invoke interactive subshells (`docker exec -it`), pre-verifying user existence and catching non-zero exits before restoring the dashboard.
 
 ### Tech Stack
 
@@ -385,11 +412,11 @@ Contributions are welcome! Here's how to get started:
 ## Roadmap
 
 - [ ] Remote Docker host connection support
-- [ ] Custom theme / color scheme configuration
+- [x] Custom theme / color scheme configuration (9 curated themes)
 - [ ] Container file browser & file transfer
 - [ ] Image vulnerability scanning integration
 - [ ] Plugin / extension system
-- [ ] Mouse interaction support
+- [x] Mouse interaction support
 
 Have an idea? [Open a feature request!](https://github.com/Ketan-Chaudhary/dockerdash/issues/new?template=feature_request.md)
 

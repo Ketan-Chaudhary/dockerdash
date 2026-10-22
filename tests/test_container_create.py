@@ -1,8 +1,13 @@
-"""Unit tests for ContainerCreateDialog port, volume, and environment parsing."""
+import socket
+from unittest.mock import MagicMock
 
 import pytest
 
-from dockdash.modals.container_create import ContainerCreateDialog
+from dockdash.modals.container_create import (
+    ContainerCreateDialog,
+    check_port_conflicts,
+    is_host_port_in_use,
+)
 
 
 def test_parse_ports_empty():
@@ -103,3 +108,87 @@ def test_parse_env():
         "NODE_ENV=production",
         "PORT=8080",
     ]
+
+
+def test_parse_volumes_invalid():
+    dialog = ContainerCreateDialog()
+    with pytest.raises(ValueError, match="Invalid volume mapping"):
+        dialog._parse_volumes("/data")
+
+    with pytest.raises(ValueError, match="cannot be empty"):
+        dialog._parse_volumes(":/app/data")
+
+    with pytest.raises(ValueError, match="cannot be empty"):
+        dialog._parse_volumes("/data:")
+
+    with pytest.raises(ValueError, match="Invalid volume mode"):
+        dialog._parse_volumes("/data:/app/data:invalid_mode")
+
+    with pytest.raises(ValueError, match="Invalid volume mapping"):
+        dialog._parse_volumes("/data:/app/data:ro:extra")
+
+
+def test_parse_env_invalid():
+    dialog = ContainerCreateDialog()
+    with pytest.raises(ValueError, match="Key cannot be empty"):
+        dialog._parse_env("=value")
+
+
+def test_is_host_port_in_use():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("127.0.0.1", 0))
+        s.listen(1)
+        port = s.getsockname()[1]
+        assert is_host_port_in_use("127.0.0.1", port, "tcp") is True
+
+    # High ephemeral port that is not in use
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+        probe.bind(("127.0.0.1", 0))
+        free_port = probe.getsockname()[1]
+    assert is_host_port_in_use("127.0.0.1", free_port, "tcp") is False
+
+
+def test_check_port_conflicts_duplicate_mappings():
+    # Duplicate host port 8080
+    ports = {"80/tcp": 8080, "8080/tcp": 8080}
+    conflict = check_port_conflicts(ports)
+    assert conflict is not None
+    assert "Duplicate host port 8080/tcp" in conflict
+
+    # Wildcard vs specific IP duplicate
+    ports_ip = {"80/tcp": 8080, "443/tcp": ("0.0.0.0", 8080)}
+    assert "Duplicate host port 8080/tcp" in (check_port_conflicts(ports_ip) or "")
+
+
+def test_check_port_conflicts_running_container():
+    mock_docker = MagicMock()
+    mock_container = MagicMock()
+    mock_container.name = "web-prod"
+    mock_container.short_id = "abcd1234efgh"
+    mock_container.attrs = {
+        "NetworkSettings": {
+            "Ports": {
+                "80/tcp": [{"HostIp": "0.0.0.0", "HostPort": "8080"}]
+            }
+        }
+    }
+    mock_docker.client.containers.list.return_value = [mock_container]
+
+    ports = {"80/tcp": 8080}
+    conflict = check_port_conflicts(ports, docker_client=mock_docker)
+    assert conflict is not None
+    assert "already in use by running container 'web-prod' (abcd1234efgh)" in conflict
+
+
+def test_check_port_conflicts_local_host_socket(monkeypatch):
+    # Mock is_host_port_in_use to return True for 8080
+    monkeypatch.setattr(
+        "dockdash.modals.container_create.is_host_port_in_use",
+        lambda ip, port, proto: port == 8080,
+    )
+    ports = {"80/tcp": 8080}
+    conflict = check_port_conflicts(ports)
+    assert conflict is not None
+    assert "Host port 8080/tcp is already in use by another local process" in conflict
+
+
