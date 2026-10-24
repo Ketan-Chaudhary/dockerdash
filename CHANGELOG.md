@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [v0.1.6] - 2026-10-24
 
 ### Added
 - Color templates and themes system with 9 curated visual themes:
