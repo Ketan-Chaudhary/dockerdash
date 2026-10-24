@@ -48,7 +48,9 @@ async def test_container_create_validation_flows():
         # Invalid CPUs (zero or negative)
         dialog.query_one("#field-cpus", Input).value = "0"
         await pilot.pause()
+        await pilot.pause()  # extra drain for Input.Changed on slower runners
         dialog.action_create()
+        await pilot.pause()
         await pilot.pause()
         assert app.screen == dialog
         assert dialog.query_one("#field-cpus", Input).has_class("-invalid")
